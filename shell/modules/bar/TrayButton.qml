@@ -22,6 +22,7 @@ ExpandingButton {
   buttonLabel: SystemTray.items.values.length
   preventAutoClose: GlobalState.trayMenuOpen
   isEmpty: SystemTray.items.values.length === 0
+  tint: Style.colors.magenta
   Repeater {
     id: items
     model: root.active ? SystemTray.items : null

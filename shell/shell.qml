@@ -71,13 +71,6 @@ ShellRoot {
 
   GlobalShortcut { // qmllint disable unresolved-type
     appid: "nyx"
-    name: "toggleMirror"
-    description: "Toggles the mirror displays panel"
-    onPressed: GlobalState.toggleMirror(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
-  }
-
-  GlobalShortcut { // qmllint disable unresolved-type
-    appid: "nyx"
     name: "toggleBitwarden"
     description: "Toggles the Bitwarden vault panel"
     onPressed: {

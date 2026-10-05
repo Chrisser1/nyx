@@ -31,6 +31,20 @@ ShellRoot {
     onFileChanged: reload()
   }
 
+  FileView {
+    id: calls
+    path: `${Quickshell.env("STUB_DIR")}/calls`
+    watchChanges: true
+    printErrors: false
+    onFileChanged: reload()
+  }
+
+  function count(item, name) {
+    let n = item.objectName === name ? 1 : 0;
+    for (const c of item.children) n += root.count(c, name);
+    return n;
+  }
+
   readonly property var steps: [
     { what: "open", ready: () => true,
       act: () => GlobalState.openCalendar("TEST") },
@@ -48,8 +62,20 @@ ShellRoot {
         if (Calendar.calendarError !== "") root.fail(`unexpected error: ${Calendar.calendarError}`);
         Calendar.openSetup();
       } },
-    { what: "form reopened from the header", settle: 3, ready: () => Calendar.setupShown,
+    { what: "form reopened from the header", settle: 3, ready: () => Calendar.setupShown && Calendar.googleCalendars.length === 2,
       act: () => {
+        const rows = root.count(panel, "googleCalendar");
+        if (rows !== 2) root.fail(`google calendar rows: ${rows}`);
+        const family = Calendar.googleCalendars[1];
+        if (family.name !== "Family" || family.added) root.fail("family calendar listed as not added");
+        root.shot("calendar-google");
+        Calendar.toggleGoogle(Calendar.googleCalendars[0]);
+        Calendar.toggleGoogle(family);
+      } },
+    { what: "family calendar added", settle: 3, ready: () => !Calendar.googleBusy && calls.text().includes("add-google"),
+      act: () => {
+        if (!calls.text().includes("add-google /caldav/v2/x@group.calendar.google.com/events Family")) root.fail(`add call: ${calls.text()}`);
+        if (calls.text().includes("add-google /caldav/v2/me@gmail.com/events")) root.fail("the main calendar was toggled");
         Calendar.closeSetup();
         if (Calendar.setupShown) root.fail("Back did not close the form");
         root.shot("calendar");

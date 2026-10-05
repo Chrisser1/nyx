@@ -53,12 +53,11 @@ The launcher modes are apps, power, wallpaper, theme, display, emoji and bitward
 
 ## Fixed, to verify live after `rebuild`
 
-- **Mirror:** Super+M opens the Mirror panel (pick an output, pick what it copies); Super+Shift+M is the launcher's display mode.
-- **Google calendar:** Evolution's sign-in saved a wrong address in the CalDAV path (404). `nyx-calendar` now repairs it when it lists calendars.
-- **App volume:** the audio panel's sliders never reached the nodes (a redeclared `moved` signal).
-- **Visualizer:** peak per column, sqrt curve, cava cut off at 50 Hz to 12 kHz.
-- **Bitwarden copy:** the secret stays out of history by design; the history shows a "Bitwarden: name (field)" row for 30 s, and Enter on it copies again from the vault.
-- **Noise cancelling:** the Input section lists real mics plus a Noise cancelling switch; `nyx-audio chain` points the filter at the chosen mic.
+- **Mirror:** Super+M opens the launcher's display mode, whose first card, Mirror displays, opens the mirror panel. Super+Shift+M is gone.
+- **Google calendars:** the calendar panel's `+` form lists every calendar the Google account can see (found through Google's CalDAV, shared ones included) with Add/Remove. Events that sit on two calendars are shown once. The family calendar is already added.
+- **Bar colours:** System is blue, Audio is green (red when muted, also for the mic), Applications is magenta; hover brightens.
+- **Tailscale:** no longer in the bar; the launcher menu has a Tailscale entry and Super+Shift+T still opens it.
+- **Notifications:** a bell with a count while anything is stored.
 
 ## Open
 

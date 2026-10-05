@@ -45,7 +45,7 @@ Singleton {
 
   component Calendar: QtObject {
     readonly property int width: 380 * Config.scale
-    readonly property int height: 420 * Config.scale
+    readonly property int height: 500 * Config.scale
     // One cell of the 7x6 month grid.
     readonly property int cellSize: 40 * Config.scale
   }

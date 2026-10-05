@@ -76,7 +76,7 @@ BorderRect {
           // Match the bar's own warning: the strip is the quickest way to see
           // what is eating the machine, so say so before it is clicked.
           if (ResourceUsage.cpuUsage > 0.8) return Style.colors.brightRed;
-          return Style.colors.white;
+          return button.containsMouse ? Qt.lighter(Style.colors.blue, 1.3) : Style.colors.blue;
         }
         font {
           family: Style.font.symbols

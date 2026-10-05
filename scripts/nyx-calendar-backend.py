@@ -10,11 +10,14 @@ Wired up by calendar.nix, which supplies GI_TYPELIB_PATH.
 """
 
 import datetime as dt
+import hashlib
 import json
 import os
 import sys
 import urllib.parse
+import urllib.request
 import uuid
+import xml.etree.ElementTree as ET
 
 import gi
 
@@ -104,6 +107,7 @@ def cmd_events(start_s, end_s):
 
     events = []
     reachable = False
+    seen = set()
 
     for source in calendars(reg):
         try:
@@ -124,6 +128,11 @@ def cmd_events(start_s, end_s):
             comp, istart, iend = args[0], args[1], args[2]
             s_date, s_time, all_day = fmt_time(istart)
             e_date, e_time, _ = fmt_time(iend)
+            # The same event on two calendars (shared ones) is shown once.
+            key = (comp.get_uid(), s_date, s_time)
+            if comp.get_uid() and key in seen:
+                return True
+            seen.add(key)
             if all_day and e_date:
                 # iCalendar all-day DTEND is exclusive; report the last day the
                 # event actually covers.
@@ -287,6 +296,113 @@ def cmd_add_caldav(name, url, user):
     print(f"Added calendar {name}")
 
 
+GOOGLE_HOST = "apidata.googleusercontent.com"
+GOOGLE_CLONE_PREFIX = "nyx-google-"
+DAV = "{DAV:}"
+CALDAV = "{urn:ietf:params:xml:ns:caldav}"
+
+
+def parse_google_calendars(xml_text):
+    """[{name, path}] for the calendar collections in a PROPFIND answer."""
+    root = ET.fromstring(xml_text)
+    found = []
+    for response in root.iter(f"{DAV}response"):
+        if response.find(f".//{DAV}resourcetype/{CALDAV}calendar") is None:
+            continue
+        path = urllib.parse.unquote(response.findtext(f"{DAV}href", "")).rstrip("/")
+        name = response.findtext(f".//{DAV}displayname") or path.rsplit("/", 2)[-2]
+        found.append({"name": name, "path": path})
+    return found
+
+
+def google_account(reg):
+    """The Google source the user signed in with, not one nyx made from it."""
+    for source in reg.list_sources(EDataServer.SOURCE_EXTENSION_AUTHENTICATION):
+        auth = source.get_extension(EDataServer.SOURCE_EXTENSION_AUTHENTICATION)
+        if auth.get_method() == "Google" and not source.get_uid().startswith(GOOGLE_CLONE_PREFIX):
+            return source
+    die("no Google account yet; sign in through the Google account button first")
+
+
+def google_paths(reg):
+    return {
+        source.get_extension(EDataServer.SOURCE_EXTENSION_WEBDAV_BACKEND).get_resource_path()
+        for source in reg.list_sources(EDataServer.SOURCE_EXTENSION_AUTHENTICATION)
+        if source.get_extension(EDataServer.SOURCE_EXTENSION_AUTHENTICATION).get_method() == "Google"
+    }
+
+
+def cmd_google_calendars():
+    """Every calendar the Google account can see, shared ones included."""
+    reg = registry()
+    repair_google(reg)
+    account = google_account(reg)
+    user = account.get_extension(EDataServer.SOURCE_EXTENSION_AUTHENTICATION).get_user()
+    try:
+        _, token, _ = account.get_oauth2_access_token_sync(None)
+    except GLib.Error as e:
+        die(f"Google would not give a token ({e.message})")
+    request = urllib.request.Request(
+        f"https://{GOOGLE_HOST}/caldav/v2/{user}/",
+        method="PROPFIND",
+        headers={"Authorization": f"Bearer {token}", "Depth": "1", "Content-Type": "application/xml"},
+        data=b'<d:propfind xmlns:d="DAV:"><d:prop><d:displayname/><d:resourcetype/></d:prop></d:propfind>',
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as answer:
+            calendars_found = parse_google_calendars(answer.read())
+    except OSError as e:
+        die(f"could not list the Google calendars ({e})")
+    have = google_paths(reg)
+    primary = account.get_extension(EDataServer.SOURCE_EXTENSION_WEBDAV_BACKEND).get_resource_path()
+    print(json.dumps([
+        {**c, "added": c["path"] in have, "primary": c["path"] == primary}
+        for c in calendars_found
+    ]))
+
+
+def clone_uid(path):
+    return GOOGLE_CLONE_PREFIX + hashlib.sha1(path.encode()).hexdigest()[:16]
+
+
+def cmd_add_google(path, name):
+    """Adds one more of the account's calendars, signing in the way the account does."""
+    reg = registry()
+    account = google_account(reg)
+    uid = clone_uid(path)
+    if reg.ref_source(uid):
+        return
+    auth = account.get_extension(EDataServer.SOURCE_EXTENSION_AUTHENTICATION)
+    source = EDataServer.Source.new_with_uid(uid, None)
+    source.set_display_name(name)
+    source.set_parent(account.get_parent())
+    calendar = source.get_extension(EDataServer.SOURCE_EXTENSION_CALENDAR)
+    calendar.set_backend_name("caldav")
+    calendar.set_selected(True)
+    new_auth = source.get_extension(EDataServer.SOURCE_EXTENSION_AUTHENTICATION)
+    new_auth.set_host(auth.get_host())
+    new_auth.set_port(auth.get_port())
+    new_auth.set_user(auth.get_user())
+    new_auth.set_method("Google")
+    source.get_extension(EDataServer.SOURCE_EXTENSION_WEBDAV_BACKEND).set_resource_path(path)
+    source.get_extension(EDataServer.SOURCE_EXTENSION_SECURITY).set_method("tls")
+    try:
+        reg.commit_source_sync(source, None)
+        connect(reg.ref_source(uid))
+    except GLib.Error as e:
+        try:
+            reg.ref_source(uid).remove_sync(None)
+        except (GLib.Error, AttributeError):
+            pass
+        die(e.message)
+    print(f"Added calendar {name}")
+
+
+def cmd_remove_google(path):
+    source = registry().ref_source(clone_uid(path))
+    if source:
+        source.remove_sync(None)
+
 def cmd_calendars():
     for s in calendars(registry()):
         print(s.get_display_name())
@@ -302,13 +418,21 @@ def main():
         cmd_add_caldav(*args[1:])
     elif args[:1] == ["caldav-config"] and len(args) == 4:
         cmd_caldav_config(*args[1:])
+    elif args[:1] == ["google-calendars"]:
+        cmd_google_calendars()
+    elif args[:1] == ["add-google"] and len(args) == 3:
+        cmd_add_google(args[1], args[2])
+    elif args[:1] == ["remove-google"] and len(args) == 2:
+        cmd_remove_google(args[1])
+    elif args[:1] == ["parse-google"]:
+        print(json.dumps(parse_google_calendars(sys.stdin.read())))
     elif args[:1] == ["google-path"] and len(args) == 3:
         print(google_path(args[1], args[2]) or "")
     elif args[:1] == ["calendars"]:
         cmd_calendars()
     else:
         print(
-            "usage: nyx-calendar-backend {events <start> <end>|add <text>|add-caldav <name> <url> <user>|caldav-config <name> <url> <user>|google-path <user> <path>|calendars}",
+            "usage: nyx-calendar-backend {events <start> <end>|add <text>|add-caldav <name> <url> <user>|caldav-config <name> <url> <user>|google-path <user> <path>|google-calendars|add-google <path> <name>|remove-google <path>|calendars}",
             file=sys.stderr,
         )
         raise SystemExit(2)

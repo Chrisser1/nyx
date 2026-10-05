@@ -82,6 +82,56 @@ ColumnLayout {
     onActivated: Calendar.openAccounts()
   }
 
+  // Everything the Google account can see; shared calendars are added here.
+  Text {
+    Layout.fillWidth: true
+    visible: Calendar.googleCalendars.length > 0
+    text: "Google calendars"
+    color: Style.colors.brightWhite
+    font.family: Style.font.main
+    font.pointSize: Style.font.small
+  }
+
+  Repeater {
+    model: Calendar.googleCalendars
+
+    RowLayout {
+      id: entry
+      required property var modelData
+      objectName: "googleCalendar"
+      Layout.fillWidth: true
+      spacing: Style.spacing.p1
+
+      Text {
+        Layout.fillWidth: true
+        text: entry.modelData.name
+        elide: Text.ElideRight
+        color: entry.modelData.added ? Style.colors.brightWhite : Style.colors.gray5
+        font.family: Style.font.main
+        font.pointSize: Style.font.small
+      }
+      Button {
+        objectName: "googleToggle"
+        Layout.fillWidth: false
+        implicitWidth: Style.font.size4 * 4
+        text: entry.modelData.primary ? "Main" : entry.modelData.added ? "Remove" : "Add"
+        primary: !entry.modelData.added
+        enabled: !entry.modelData.primary && !Calendar.googleBusy
+        onActivated: Calendar.toggleGoogle(entry.modelData)
+      }
+    }
+  }
+
+  Text {
+    Layout.fillWidth: true
+    visible: Calendar.googleError !== ""
+    text: Calendar.googleError
+    wrapMode: Text.WordWrap
+    color: Style.colors.brightRed
+    font.family: Style.font.main
+    font.pointSize: Style.font.tiny
+  }
+
   Text {
     Layout.fillWidth: true
     text: "or CalDAV (Nextcloud, iCloud, Fastmail), using the calendar's own address"

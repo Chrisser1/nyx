@@ -103,13 +103,13 @@ Singleton {
       iconId: "preferences-desktop-theme"
     },
     {
-      id: "nyx-mode-mirror",
-      name: "Mirror displays",
-      comment: "Show one output's picture on another, or stop mirroring",
-      panel: "mirror",
+      id: "nyx-mode-tailnet",
+      name: "Tailscale",
+      comment: "Peers, exit nodes and the connection",
+      panel: "tailnet",
       genericName: "Menu",
-      categories: ["Display", "Utility"],
-      iconId: "preferences-desktop-remote-desktop"
+      categories: ["Network", "Utility"],
+      iconId: "network-vpn"
     },
     {
       id: "nyx-mode-bitwarden",
@@ -247,6 +247,15 @@ Singleton {
 
   // Display actions, all driven by the nyx-monitors helper.
   readonly property var displayLayouts: [
+    {
+      id: "nyx-display-mirror",
+      name: "Mirror displays",
+      comment: "Show one output's picture on another, or stop mirroring",
+      panel: "mirror",
+      genericName: "Display",
+      categories: ["Display", "Mirror"],
+      iconId: "preferences-desktop-remote-desktop"
+    },
     {
       id: "nyx-display-arrange",
       name: "Arrange displays",

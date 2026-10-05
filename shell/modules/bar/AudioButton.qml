@@ -37,6 +37,8 @@ ExpandingButton {
     return (obj && obj.icon) ? obj.icon : root.fallbackIcon
   }
   buttonLabel: muted ? mutedIcon : getSinkIcon(AudioData.sink)
+  // Green while sound can come out, red once muted.
+  tint: root.muted ? Style.colors.red : Style.colors.green
 
   // Expands when scrolled, not on every volume change: volume keys already get
   // the Osd, and expanding here re-laid out the bar on every monitor per tap.
@@ -96,9 +98,9 @@ ExpandingButton {
     ]
     Text {
       anchors.centerIn: parent
-      color: Style.colors.white
       id: srcBtnText
       text: root.buttonLabel
+      color: root.tint
       font {
         family: Style.font.light
         pixelSize: Style.font.size3
@@ -136,8 +138,8 @@ ExpandingButton {
     ]
     Text {
       anchors.centerIn: parent
-      color: Style.colors.white
       id: inputBtnText
+      color: AudioData.source?.audio?.muted ? Style.colors.red : Style.colors.green
       text: {
         if (AudioData.source?.audio?.muted) {
           return "󰍭"

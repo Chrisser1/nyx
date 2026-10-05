@@ -110,6 +110,9 @@
         '';
       };
 
+      notification-button = qmlTest "notifybutton" { };
+      bar-colors = qmlTest "barcolors" { };
+
       mirror-panel = qmlTest "mirror" {
         setup = ''
           export STUB_DIR=$PWD/stub
@@ -170,12 +173,13 @@
           export STUB_DIR=$PWD/stub
           mkdir -p $STUB_DIR
           touch $STUB_DIR/no-calendar
+          printf '[{"name":"me@gmail.com","path":"/caldav/v2/me@gmail.com/events","added":true,"primary":true},{"name":"Family","path":"/caldav/v2/x@group.calendar.google.com/events","added":false,"primary":false}]' > $STUB_DIR/google.json
           substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-calendar"' '"${lib.getExe calendarStubbed}"'
         '';
       };
 
       calendar = pkgs.runCommand "nyx-calendar-test" {
-        nativeBuildInputs = [ calendarStubbed ];
+        nativeBuildInputs = [ calendarStubbed pkgs.jq ];
       } ''
         bash ${./_helpers/calendar-test.sh}
         touch $out
@@ -184,7 +188,7 @@
       # Builds the CalDAV source for real, against Evolution Data Server's
       # typelibs; committing it needs a running server, so that is not covered.
       calendar-backend = pkgs.runCommand "nyx-calendar-backend-test" {
-        nativeBuildInputs = [ helpers.calendarBackend ];
+        nativeBuildInputs = [ helpers.calendarBackend pkgs.jq ];
       } ''
         cfg=$(nyx-calendar-backend caldav-config Work https://cloud.example.org:8443/remote.php/dav/calendars/me/personal/ me)
         for want in 'DisplayName=Work' 'BackendName=caldav' 'Host=cloud.example.org' 'Port=8443' 'User=me' \
@@ -200,6 +204,20 @@
         [ "$(nyx-calendar-backend google-path me@gmail.com /caldav/v2/chris@gmail.com/events)" = /caldav/v2/me@gmail.com/events ] || { echo "FAIL: google path not corrected"; exit 1; }
         [ -z "$(nyx-calendar-backend google-path me@gmail.com /caldav/v2/me@gmail.com/events)" ] || { echo "FAIL: correct google path changed"; exit 1; }
         [ -z "$(nyx-calendar-backend google-path me /remote.php/dav/calendars/me/personal/)" ] || { echo "FAIL: non-google path changed"; exit 1; }
+        # Google's calendar listing: calendars are picked out, other collections skipped, paths unescaped.
+        found=$(nyx-calendar-backend parse-google <<'XML'
+        <D:multistatus xmlns:D="DAV:" xmlns:caldav="urn:ietf:params:xml:ns:caldav">
+          <D:response><D:href>/caldav/v2/me%40gmail.com/events/</D:href><D:propstat><D:prop>
+            <D:displayname>me@gmail.com</D:displayname><D:resourcetype><D:collection/><caldav:calendar/></D:resourcetype></D:prop></D:propstat></D:response>
+          <D:response><D:href>/caldav/v2/abc%40group.calendar.google.com/events/</D:href><D:propstat><D:prop>
+            <D:displayname>Family</D:displayname><D:resourcetype><D:collection/><caldav:calendar/></D:resourcetype></D:prop></D:propstat></D:response>
+          <D:response><D:href>/caldav/v2/me%40gmail.com/inbox/</D:href><D:propstat><D:prop>
+            <D:resourcetype><D:collection/><caldav:schedule-inbox/></D:resourcetype></D:prop></D:propstat></D:response>
+        </D:multistatus>
+        XML
+        )
+        [ "$(jq -c 'map(.path)' <<< "$found")" = '["/caldav/v2/me@gmail.com/events","/caldav/v2/abc@group.calendar.google.com/events"]' ] || { echo "FAIL: google calendars: $found"; exit 1; }
+        [ "$(jq -r '.[1].name' <<< "$found")" = Family ] || { echo "FAIL: google calendar name"; exit 1; }
         touch $out
       '';
 

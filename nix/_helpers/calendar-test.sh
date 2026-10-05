@@ -28,4 +28,13 @@ rm "$STUB_DIR/calls"
 nyx-calendar auth
 [ "$(cat "$STUB_DIR/calls")" = "evolution -c calendar" ] || fail "auth starts Evolution's calendar"
 
+# Google calendars are listed and added through the backend.
+printf '[{"name":"Family","path":"/caldav/v2/x@group.calendar.google.com/events","added":false,"primary":false}]' > "$STUB_DIR/google.json"
+[ "$(nyx-calendar google-calendars | jq -r '.[0].name')" = Family ] || fail "google calendars listed"
+rm -f "$STUB_DIR/calls"
+nyx-calendar add-google /caldav/v2/x@group.calendar.google.com/events Family
+nyx-calendar remove-google /caldav/v2/x@group.calendar.google.com/events
+[ "$(cat "$STUB_DIR/calls")" = "$(printf 'add-google /caldav/v2/x@group.calendar.google.com/events Family\nremove-google /caldav/v2/x@group.calendar.google.com/events')" ] || fail "google calls: $(cat "$STUB_DIR/calls")"
+if nyx-calendar add-google /only/a/path 2>/dev/null; then fail "add-google without a name accepted"; fi
+
 echo "calendar helper tests passed"

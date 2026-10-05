@@ -36,6 +36,8 @@ BorderRect {
   required property string monitorId
   required property string buttonLabel
   property bool isEmpty: false;
+  // The glyph's colour, and the border's while hovered.
+  property color tint: Style.colors.white
 
   property var onRightClick: () => {}
 
@@ -113,7 +115,7 @@ BorderRect {
       name: "hovered"
       when: !root.active && button.hovered
       PropertyChanges { indicator.text: root.buttonLabel }
-      PropertyChanges { buttonBg.borderColor: Style.colors.lineStrong }
+      PropertyChanges { buttonBg.borderColor: root.tint }
     },
     State {
       name: "active"
@@ -164,7 +166,8 @@ BorderRect {
         Text {
           anchors.centerIn: parent
           id: indicator
-          color: Style.colors.white
+          color: button.hovered ? Qt.lighter(root.tint, 1.3) : root.tint
+          Behavior on color { ColorAnimation { duration: Style.durations.small; easing.type: Easing.OutQuad } }
           font {
             family: Style.font.light
             pixelSize: Style.font.size3

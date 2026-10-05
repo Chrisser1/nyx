@@ -98,6 +98,16 @@ Item {
     launcherList.list.decrementCurrentIndex()
   }
 
+  // The panels the menu and display cards open in place of a launcher mode.
+  function openPanel(name) {
+    if (name === "mirror") GlobalState.openMirror(root.monitorId)
+    else if (name === "tailnet") GlobalState.openTailnet(root.monitorId)
+    else if (name === "bitwarden") {
+      VaultData.hint = ""
+      GlobalState.openBitwarden(root.monitorId)
+    }
+  }
+
   // The calculator is the one source driven by the query rather than the mode:
   // in calc mode every keystroke is an expression, in apps mode only the ones
   // that look like maths, so searching for "1password" never spawns qalc.
@@ -317,19 +327,14 @@ Item {
 
       function onAccept(entry) {
         const s = GlobalState.launcherMode
+        if (entry.panel !== undefined) {
+          root.openPanel(entry.panel)
+          return
+        }
         if (s === "notifications") {
           Notifications.attemptInvokeAction(entry.notificationId, "default")
           GlobalState.closeLauncher()
         } else if (s === "menu") {
-          if (entry.panel === "mirror") {
-            GlobalState.openMirror(root.monitorId)
-            return
-          }
-          if (entry.panel === "bitwarden") {
-            VaultData.hint = ""
-            GlobalState.openBitwarden(root.monitorId)
-            return
-          }
           GlobalState.launcherMode = entry.mode
           GlobalState.searchQuery = ""
         } else if (s === "theme") {

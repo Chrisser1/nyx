@@ -201,6 +201,7 @@ Singleton {
   readonly property bool setupShown: setupOpen || (!available && refreshed && !setupDismissed)
 
   function openSetup() {
+    root.refreshGoogle()
     root.calendarError = ""
     root.setupOpen = true
   }
@@ -208,6 +209,50 @@ Singleton {
   function closeSetup() {
     root.setupOpen = false
     root.setupDismissed = true
+  }
+
+  // The Google account's calendars, shared ones included, for the setup form.
+  // [{ name, path, added, primary }]
+  property var googleCalendars: []
+  property bool googleBusy: false
+  property string googleError: ""
+
+  function refreshGoogle() {
+    if (googleProc.running) return
+    root.googleError = ""
+    googleProc.command = [Host.calendar, "google-calendars"]
+    googleProc.running = true
+  }
+
+  // Adds or removes one of them, then shows the result in the list and the grid.
+  function toggleGoogle(calendar) {
+    if (googleBusy || calendar.primary) return
+    root.googleBusy = true
+    root.googleError = ""
+    googleProc.command = calendar.added
+      ? [Host.calendar, "remove-google", calendar.path]
+      : [Host.calendar, "add-google", calendar.path, calendar.name]
+    googleProc.running = true
+  }
+
+  Process {
+    id: googleProc
+    stdout: StdioCollector { id: googleOut }
+    stderr: StdioCollector { id: googleErr }
+    onExited: code => {
+      const listing = command[1] === "google-calendars"
+      root.googleBusy = false
+      if (code !== 0) {
+        root.googleError = googleErr.text.trim().split("\n").pop() || "Could not reach Google"
+        return
+      }
+      if (listing) {
+        root.googleCalendars = JSON.parse(googleOut.text)
+      } else {
+        root.refresh()
+        root.refreshGoogle()
+      }
+    }
   }
 
   // Google sign-in lives in Evolution; re-check once it closes.
@@ -226,7 +271,10 @@ Singleton {
   Process {
     id: accountsProc
     command: [Host.calendar, "auth"]
-    onExited: root.refresh()
+    onExited: {
+      root.refresh()
+      root.refreshGoogle()
+    }
   }
 
   Process {

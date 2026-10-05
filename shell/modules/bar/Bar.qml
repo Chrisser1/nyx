@@ -112,7 +112,6 @@ Item {
           SysmonWidget { }
           NetworkWidget { monitorId: root.monitorId }
           BluetoothWidget { }
-          TailnetWidget { monitorId: root.monitorId }
           DockerWidget { monitorId: root.monitorId }
           BatteryWidget { }
           Separator {}
