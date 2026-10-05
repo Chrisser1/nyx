@@ -20,6 +20,7 @@ import QtQuick
 import qs.services
 import qs.config
 import qs.utils
+import "../utils/emojiSearch.js" as EmojiSearch
 
 
 Singleton {
@@ -333,7 +334,10 @@ Singleton {
   // ---- Emoji ---------------------------------------------------------------
   // From `nyx-emoji list`, recently used first. Skin tones sit in the drawer.
   property list<var> emojiEntries: []
-  property list<var> emojiData: emojiEntries.map(a => ({ name: Fuzzy.prepare(a.search), entry: a }))
+  property var emojiIndex: []
+  readonly property int emojiCap: 60
+
+  function searchEmoji(query) { return EmojiSearch.search(query, root.emojiIndex, root.emojiCap) }
 
   function refreshEmoji() { emojiProc.running = true }
 
@@ -348,7 +352,6 @@ Singleton {
           glyph: e.e,
           genericName: e.g,
           comment: e.k.join(", "),
-          search: [e.n, ...e.k].join(" "),
           script: [Host.emoji, "copy", e.e],
           actions: e.v.map(v => ({
             id: `nyx-emoji-${v.e}`,
@@ -356,6 +359,7 @@ Singleton {
             script: [Host.emoji, "copy", v.e]
           }))
         }));
+        root.emojiIndex = EmojiSearch.index(root.emojiEntries);
       }
     }
   }
@@ -418,11 +422,17 @@ Singleton {
             id: "nyx-bw-unlock", name: "Unlock vault", genericName: "Bitwarden", search: "unlock vault",
             comment: "Asks for the master password", iconId: "dialog-password", unlockVault: true
           }];
+        } else if (data.state === "login") {
+          root.vaultEntries = [{
+            id: "nyx-bw-login", name: "Log in to Bitwarden", genericName: "Bitwarden", search: "log in login bitwarden",
+            comment: "Opens a terminal for rbw login",
+            iconId: "dialog-password", runInTerminal: true, command: ["rbw", "login"]
+          }];
         } else {
           root.vaultEntries = [{
-            id: "nyx-bw-setup", name: "Set up rbw", genericName: "Bitwarden", search: "set up rbw login",
-            comment: "Set programs.rbw.settings.email, then log in here",
-            iconId: "dialog-password", runInTerminal: true, command: ["rbw", "login"]
+            id: "nyx-bw-setup", name: "Set up rbw", genericName: "Bitwarden", search: "set up rbw email",
+            comment: "Set programs.rbw.settings.email, then rebuild",
+            iconId: "dialog-password", runInTerminal: true, command: ["rbw", "config", "show"]
           }];
         }
       }

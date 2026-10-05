@@ -22,6 +22,15 @@ ShellRoot {
     if (Quickshell.env("OUT")) launcher.grabToImage(r => r.saveToFile(`${Quickshell.env("OUT")}/${name}.png`));
   }
 
+  function find(item, name) {
+    if (item.objectName === name) return item;
+    for (const c of item.children) {
+      const found = root.find(c, name);
+      if (found) return found;
+    }
+    return null;
+  }
+
   function entry(id) {
     return LauncherData.themeEntries.find(e => e.id === id);
   }
@@ -53,15 +62,26 @@ ShellRoot {
     { what: "wallpaper thumbnails", settle: 30,
       ready: () => LauncherData.wallpaperData.length > 0
         && LauncherData.wallpaperData.every(d => LauncherData.previewFor(d.entry) !== ""),
-      act: () => root.shot("wallpaper") },
+      act: () => {
+        const card = root.find(launcher, "preview");
+        if (!card || Math.abs(card.width / card.height - 16 / 9) > 0.05) root.fail(`wallpaper preview aspect: ${card?.width}x${card?.height}`);
+        root.shot("wallpaper");
+      } },
     { what: "wallpaper screenshot", settle: 5, ready: () => true,
       act: () => GlobalState.launcherMode = "emoji" },
     { what: "emoji loaded", settle: 5, ready: () => LauncherData.emojiEntries.length > 1800,
       act: () => {
-        const thumbs = Fuzzy.query("thumbs up", LauncherData.emojiData)[0];
+        const thumbs = LauncherData.searchEmoji("thumbs up")[0];
         if (thumbs?.glyph !== "👍") root.fail(`emoji search: ${thumbs?.name}`);
         if (thumbs.actions.length !== 5) root.fail("emoji skin tones");
-        if (Fuzzy.query("+1", LauncherData.emojiData)[0]?.glyph !== "👍") root.fail("emoji keyword search");
+        if (LauncherData.searchEmoji("+1")[0]?.glyph !== "👍") root.fail("emoji keyword search");
+        if (LauncherData.searchEmoji("face").length !== LauncherData.emojiCap) root.fail("emoji results capped");
+        if (LauncherData.searchEmoji("red heart")[0]?.glyph !== "❤️") root.fail(`emoji ranking: ${LauncherData.searchEmoji("red heart")[0]?.name}`);
+        if (LauncherData.searchEmoji("").length !== LauncherData.emojiEntries.length) root.fail("empty query lists all");
+        if (LauncherData.searchEmoji("zzzzqq").length !== 0) root.fail("no match");
+        const t = Date.now();
+        for (const q of ["a", "heart", "face", "thumbs up", "x"]) LauncherData.searchEmoji(q);
+        console.log(`emoji search x5: ${Date.now() - t}ms`);
         GlobalState.searchQuery = "heart";
       } },
     { what: "emoji search", settle: 5, ready: () => true,

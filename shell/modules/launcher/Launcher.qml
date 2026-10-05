@@ -44,6 +44,12 @@ Item {
   // and rebuilding a hidden list on every keystroke.
   readonly property bool owner: GlobalState.launcherMonitorId === root.monitorId
 
+  // Wallpaper previews use the screen's shape, as gslapper's fill does.
+  readonly property real screenAspect: {
+    const s = Quickshell.screens.find(s => s.name === root.monitorId);
+    return s && s.height > 0 ? s.width / s.height : 16 / 9;
+  }
+
   // Only render while on-screen or mid-transition
   visible: launcher.y > -Style.launcher.height
 
@@ -303,7 +309,7 @@ Item {
           return Fuzzy.query(q, LauncherData.themeData)
         } else if (s === "emoji") {
           const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/emoji`, "")
-          return Fuzzy.query(q, LauncherData.emojiData)
+          return LauncherData.searchEmoji(q)
         } else if (s === "bitwarden") {
           const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/bitwarden`, "")
           return Fuzzy.query(q, LauncherData.bitwardenData)
@@ -377,6 +383,8 @@ Item {
           notificationId: modelData?.notificationId ?? -1
           imageSource: modelData?.image ?? ""
           preview: LauncherData.previewFor(modelData)
+          previewAspect: root.screenAspect
+          shadow: GlobalState.launcherMode !== "emoji"
           palette: modelData?.palette ?? []
           swatch: LauncherData.swatchFor(modelData)
           glyph: modelData?.glyph ?? ""

@@ -39,6 +39,8 @@ Item {
 
   // Preview cards (wallpapers, themes, emoji) replace the icon and description.
   property string preview: ""
+  property real previewAspect: 16 / 9
+  property bool shadow: true
   property var palette: []
   property string swatch: ""
   property bool current: false
@@ -162,14 +164,18 @@ Item {
     }
 
   ]
-  MultiEffect {
-    source: card
+  // Dense grids such as emoji skip the shadow; it is the costliest part of a card.
+  Loader {
+    active: root.shadow
     anchors.fill: card
-    shadowBlur: 1.0
-    shadowEnabled: true
-    shadowColor: Functions.transparentize("#000", 0.5)
-    shadowVerticalOffset: 0
-    shadowHorizontalOffset: 0
+    sourceComponent: MultiEffect {
+      source: card
+      shadowBlur: 1.0
+      shadowEnabled: true
+      shadowColor: Functions.transparentize("#000", 0.5)
+      shadowVerticalOffset: 0
+      shadowHorizontalOffset: 0
+    }
   }
 
   Rectangle {
@@ -298,9 +304,12 @@ Item {
       Rectangle {
         visible: root.hasPreview
         Layout.fillWidth: true
-        Layout.fillHeight: true
+        // Wallpapers keep the screen's shape; other previews fill the card.
+        Layout.fillHeight: root.preview === ""
+        Layout.preferredHeight: root.preview !== "" ? layout.width / root.previewAspect : -1
         color: root.swatch || (root.palette[0] ?? Style.colors.gray1)
         border.width: Style.bar.borderWidth
+        objectName: "preview"
         border.color: root.current ? Style.colors.accent : Style.colors.gray3
         clip: true
 
