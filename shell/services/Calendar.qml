@@ -159,6 +159,7 @@ Singleton {
       // has been added yet, which is what tells `available` apart from an
       // authenticated but genuinely empty month.
       root.available = code === 0
+      root.refreshed = true
       root.loading = false
       if (root.pendingRefresh) {
         root.pendingRefresh = false
@@ -185,6 +186,68 @@ Singleton {
   Process {
     id: openProc
     command: [Host.calendar, "open"]
+  }
+
+  // Account setup, for modules/calendar/CalendarSetup.qml. The form shows on
+  // request, and by itself while there is no calendar at all.
+  property bool setupOpen: false
+  property bool setupDismissed: false
+  property bool refreshed: false
+  property bool addingCalendar: false
+  property string calendarError: ""
+  property string pendingPassword: ""
+  signal calendarAdded()
+
+  readonly property bool setupShown: setupOpen || (!available && refreshed && !setupDismissed)
+
+  function openSetup() {
+    root.calendarError = ""
+    root.setupOpen = true
+  }
+
+  function closeSetup() {
+    root.setupOpen = false
+    root.setupDismissed = true
+  }
+
+  // Google sign-in lives in Evolution; re-check once it closes.
+  function openAccounts() { accountsProc.running = true }
+
+  // The password goes over stdin, never onto a command line.
+  function addCalDav(name, url, user, password) {
+    if (addCalDavProc.running) return
+    root.calendarError = ""
+    root.addingCalendar = true
+    root.pendingPassword = password
+    addCalDavProc.command = [Host.calendar, "add-caldav", name, url, user]
+    addCalDavProc.running = true
+  }
+
+  Process {
+    id: accountsProc
+    command: [Host.calendar, "auth"]
+    onExited: root.refresh()
+  }
+
+  Process {
+    id: addCalDavProc
+    stdinEnabled: true
+    stderr: StdioCollector { id: calDavErr }
+    onStarted: {
+      write(`${root.pendingPassword}\n`)
+      root.pendingPassword = ""
+      stdinEnabled = false
+    }
+    onExited: code => {
+      root.addingCalendar = false
+      if (code === 0) {
+        root.setupOpen = false
+        root.calendarAdded()
+        root.refresh()
+      } else {
+        root.calendarError = calDavErr.text.trim().split("\n").pop() || "Could not add the calendar"
+      }
+    }
   }
 
   Timer {

@@ -122,6 +122,7 @@ Item {
     }
 
     ColumnLayout {
+      visible: !Calendar.setupShown
       anchors.fill: parent
       anchors.margins: Style.spacing.p2
       spacing: Style.spacing.p1
@@ -153,6 +154,11 @@ Item {
         IconButton {
           glyph: "󰃭"
           onActivated: Calendar.goToday()
+        }
+
+        IconButton {
+          glyph: "󰐕"
+          onActivated: Calendar.openSetup()
         }
 
         IconButton {
@@ -328,7 +334,7 @@ Item {
           font.pointSize: Style.font.tiny
           text: {
             if (Calendar.loading) return "Loading…"
-            if (!Calendar.available) return "No calendar account yet.\nRun `nyx-calendar auth` to add one."
+            if (!Calendar.available) return "No calendar yet"
             return "No events"
           }
         }
@@ -368,6 +374,12 @@ Item {
         onAccepted: Calendar.addEvent(text)
         Keys.onEscapePressed: GlobalState.closeCalendar()
       }
+    }
+
+    CalendarSetup {
+      visible: Calendar.setupShown
+      anchors.fill: parent
+      anchors.margins: Style.spacing.p2
     }
   }
 }

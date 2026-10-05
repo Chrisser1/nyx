@@ -44,6 +44,7 @@ let
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath giPackages}"
     '';
 in rec {
+  inherit calendarBackend;
   power = script "power" [ pkgs.systemd hyprland ] { NYX_LOCK_COMMAND = lockCommand; };
   screenshot = script "screenshot" (with pkgs; [ grim slurp satty jq wl-clipboard hyprland ]) { NYX_SCREENSHOT_DIR = screenshotDir; };
   colorpicker = script "colorpicker" (with pkgs; [ hyprpicker libnotify ]) { };

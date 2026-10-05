@@ -13,6 +13,8 @@ import datetime as dt
 import json
 import os
 import sys
+import urllib.parse
+import uuid
 
 import gi
 
@@ -120,7 +122,7 @@ def cmd_events(start_s, end_s):
             print(f"nyx-calendar: {name}: {e.message}", file=sys.stderr)
 
     if not reachable:
-        die("no calendar could be opened -- run 'nyx-calendar auth'")
+        die("no calendar could be opened -- add one from the calendar panel")
 
     events.sort(key=lambda e: (e["start"], e["startTime"]))
     print(json.dumps(events))
@@ -129,7 +131,7 @@ def cmd_events(start_s, end_s):
 def pick_target(reg, wanted):
     sources = calendars(reg)
     if not sources:
-        die("no calendars configured -- run 'nyx-calendar auth'")
+        die("no calendars configured -- add one from the calendar panel")
     if wanted:
         for s in sources:
             if s.get_display_name() == wanted:
@@ -194,6 +196,69 @@ def cmd_add(text):
     print(f"Added to {source.get_display_name()}: {title} - {stamp}")
 
 
+def caldav_source(name, url, user):
+    """An uncommitted CalDAV calendar source for the calendar's own URL."""
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme not in ("http", "https") or not parts.hostname:
+        die("the CalDAV address must start with http:// or https://")
+    secure = parts.scheme == "https"
+    path = parts.path or "/"
+    if parts.query:
+        path += "?" + parts.query
+
+    source = EDataServer.Source.new_with_uid(str(uuid.uuid4()), None)
+    source.set_display_name(name)
+
+    calendar = source.get_extension(EDataServer.SOURCE_EXTENSION_CALENDAR)
+    calendar.set_backend_name("caldav")
+    calendar.set_selected(True)
+
+    auth = source.get_extension(EDataServer.SOURCE_EXTENSION_AUTHENTICATION)
+    auth.set_host(parts.hostname)
+    auth.set_port(parts.port or (443 if secure else 80))
+    auth.set_user(user)
+
+    source.get_extension(EDataServer.SOURCE_EXTENSION_WEBDAV_BACKEND).set_resource_path(path)
+    source.get_extension(EDataServer.SOURCE_EXTENSION_SECURITY).set_method(
+        "tls" if secure else "none"
+    )
+    return source
+
+
+def cmd_caldav_config(name, url, user):
+    print(caldav_source(name, url, user).to_string()[0])
+
+
+def cmd_add_caldav(name, url, user):
+    """Create the calendar, with the password read from stdin, and prove it works."""
+    password = sys.stdin.readline().rstrip("\n")
+    if not password:
+        die("no password given")
+    source = caldav_source(name, url, user)
+    uid = source.get_uid()
+    reg = registry()
+    try:
+        reg.commit_source_sync(source, None)
+    except GLib.Error as e:
+        die(e.message)
+    # The registry holds its own copy of a committed source.
+    source = reg.ref_source(uid)
+    try:
+        source.store_password_sync(password, True, None)
+        # Opening it is what checks the address and credentials.
+        connect(source)
+    except GLib.Error as e:
+        try:
+            source.remove_sync(None)
+        except GLib.Error:
+            pass
+        message = e.message
+        if "locked" in message:
+            message = "the keyring is locked, so the password cannot be saved"
+        die(message)
+    print(f"Added calendar {name}")
+
+
 def cmd_calendars():
     for s in calendars(registry()):
         print(s.get_display_name())
@@ -205,11 +270,15 @@ def main():
         cmd_events(args[1], args[2])
     elif args[:1] == ["add"] and len(args) == 2:
         cmd_add(args[1])
+    elif args[:1] == ["add-caldav"] and len(args) == 4:
+        cmd_add_caldav(*args[1:])
+    elif args[:1] == ["caldav-config"] and len(args) == 4:
+        cmd_caldav_config(*args[1:])
     elif args[:1] == ["calendars"]:
         cmd_calendars()
     else:
         print(
-            "usage: nyx-calendar-backend {events <start> <end>|add <text>|calendars}",
+            "usage: nyx-calendar-backend {events <start> <end>|add <text>|add-caldav <name> <url> <user>|caldav-config <name> <url> <user>|calendars}",
             file=sys.stderr,
         )
         raise SystemExit(2)

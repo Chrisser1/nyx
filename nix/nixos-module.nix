@@ -6,7 +6,7 @@
   in {
     options.programs.nyx.calendar.enable = lib.mkEnableOption ''
       Evolution Data Server for the calendar panel. Accounts (Google etc.) are
-      added once through Evolution: run `nyx-calendar auth`
+      added from the calendar panel (Google through Evolution's sign-in, CalDAV by address)
     '';
 
     config = lib.mkIf cfg.calendar.enable {

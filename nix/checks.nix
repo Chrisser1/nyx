@@ -27,6 +27,7 @@
     stubbed = name: runtimeInputs: env: import ./_helpers/script.nix { inherit pkgs; } name runtimeInputs env;
     dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ] { };
     tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ] { };
+    calendarStubbed = stubbed "calendar" [ (stub "nyx-calendar-backend") (stub "evolution") ] { };
     bitwardenStubbed = stubbed "bitwarden" (map stub [ "rbw" "wl-copy" "wl-paste" "notify-send" ] ++ [ pkgs.jq pkgs.coreutils pkgs.findutils pkgs.gnugrep ]) { NYX_BITWARDEN_CLEAR = "1"; NYX_BITWARDEN_PINENTRY = "/stub/pinentry"; };
 
     # Runs tests/<name>/shell.qml headless against a copy of shell/; it prints PASS.
@@ -111,6 +112,40 @@
           substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-bitwarden"' '"${lib.getExe bitwardenStubbed}"'
         '';
       };
+
+      calendar-panel = qmlTest "calendar" {
+        setup = ''
+          export STUB_DIR=$PWD/stub
+          mkdir -p $STUB_DIR
+          touch $STUB_DIR/no-calendar
+          substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-calendar"' '"${lib.getExe calendarStubbed}"'
+        '';
+      };
+
+      calendar = pkgs.runCommand "nyx-calendar-test" {
+        nativeBuildInputs = [ calendarStubbed ];
+      } ''
+        bash ${./_helpers/calendar-test.sh}
+        touch $out
+      '';
+
+      # Builds the CalDAV source for real, against Evolution Data Server's
+      # typelibs; committing it needs a running server, so that is not covered.
+      calendar-backend = pkgs.runCommand "nyx-calendar-backend-test" {
+        nativeBuildInputs = [ helpers.calendarBackend ];
+      } ''
+        cfg=$(nyx-calendar-backend caldav-config Work https://cloud.example.org:8443/remote.php/dav/calendars/me/personal/ me)
+        for want in 'DisplayName=Work' 'BackendName=caldav' 'Host=cloud.example.org' 'Port=8443' 'User=me' \
+                    'Method=tls' 'ResourcePath=/remote.php/dav/calendars/me/personal/'; do
+          grep -qxF "$want" <<< "$cfg" || { echo "FAIL: missing $want in:"; echo "$cfg"; exit 1; }
+        done
+        plain=$(nyx-calendar-backend caldav-config Home http://nas.lan/dav/ me)
+        grep -qxF 'Port=80' <<< "$plain" || { echo "FAIL: default http port"; exit 1; }
+        grep -qxF 'Method=none' <<< "$plain" || { echo "FAIL: plain http is not secured"; exit 1; }
+        if nyx-calendar-backend caldav-config Bad ftp://nas/dav me 2>/dev/null; then echo "FAIL: ftp accepted"; exit 1; fi
+        if nyx-calendar-backend caldav-config Bad nas/dav me 2>/dev/null; then echo "FAIL: schemeless address accepted"; exit 1; fi
+        touch $out
+      '';
 
       clipboard = pkgs.runCommand "nyx-clipboard-test" {
         nativeBuildInputs = [ helpers.clipboard pkgs.imagemagick pkgs.jq ];
