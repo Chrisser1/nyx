@@ -44,9 +44,23 @@ case "${1:-}" in
     rbw config set email "$email"
     rbw config set pinentry "$NYX_BITWARDEN_PINENTRY"
     # A failed login leaves the old session untouched, so say why it failed.
+    # Bitwarden refuses a device it has not seen and rbw cannot take the emailed
+    # code, so register it with the account's API key instead. Only the agent
+    # log says so, hence reading what the attempt appended to it.
+    log="${XDG_DATA_HOME:-$HOME/.local/share}/rbw/agent.err"
+    seen=$(wc -l < "$log" 2>/dev/null || echo 0)
     if ! err=$(rbw login 2>&1); then
-      notify "Login failed: $(printf '%s' "$err" | tail -n 1)"
-      exit 1
+      if tail -n +"$((seen + 1))" "$log" 2>/dev/null | grep -q "New device verification required"; then
+        notify "New device: enter your API key (vault: Settings, Security, Keys, View API key)"
+        if ! err=$(rbw register 2>&1); then
+          notify "Register failed: $(printf '%s' "$err" | tail -n 1)"
+          exit 1
+        fi
+        err=$(rbw login 2>&1) || { notify "Login failed: $(printf '%s' "$err" | tail -n 1)"; exit 1; }
+      else
+        notify "Login failed: $(printf '%s' "$err" | tail -n 1)"
+        exit 1
+      fi
     fi
     # Login may leave the vault locked.
     rbw unlocked > /dev/null 2>&1 || rbw unlock

@@ -29,6 +29,7 @@ if nyx-bitwarden setup me@example.com eu; then fail "failed login succeeded"; fi
 grep -q "Login failed: Username or password is incorrect" "$STUB_DIR/notifications" || fail "login failure notified"
 [ "$(nyx-bitwarden list)" = '{"state":"login","entries":[]}' ] || fail "login after failed setup"
 rm "$STUB_DIR/login-fails"
+rbw login
 
 nyx-bitwarden setup me@example.com eu
 [ "$(cat "$STUB_DIR/cfg/base_url")" = https://api.bitwarden.eu ] || fail "eu base url"
@@ -41,6 +42,21 @@ nyx-bitwarden setup me@example.com https://vault.example.org
 [ ! -e "$STUB_DIR/cfg/identity_url" ] || fail "self-hosted keeps identity url"
 nyx-bitwarden setup me@example.com com
 [ ! -e "$STUB_DIR/cfg/base_url" ] || fail "com clears base url"
+
+# A device Bitwarden has not seen is registered with the API key, then logged in.
+touch "$STUB_DIR/new-device"
+rm -f "$STUB_DIR/cfg/email" "$XDG_DATA_HOME/rbw/me@example.com.json" "$STUB_DIR/calls" "$STUB_DIR/notifications"
+nyx-bitwarden setup me@example.com eu
+grep -q '^register$' "$STUB_DIR/calls" || fail "new device is registered"
+grep -q "New device: enter your API key" "$STUB_DIR/notifications" || fail "API key hint notified"
+[ "$(nyx-bitwarden list | jq -r .state)" = unlocked ] || fail "logged in after registering"
+# An ordinary failed login does not ask for an API key.
+rm -f "$STUB_DIR/new-device" "$STUB_DIR/registered" "$STUB_DIR/calls" "$XDG_DATA_HOME/rbw/me@example.com.json"
+touch "$STUB_DIR/login-fails"
+if nyx-bitwarden setup me@example.com eu; then fail "failed login succeeded"; fi
+if grep -q '^register$' "$STUB_DIR/calls" 2>/dev/null; then fail "wrong password asked for an API key"; fi
+rm "$STUB_DIR/login-fails"
+rbw login
 
 nyx-bitwarden lock
 [ "$(nyx-bitwarden list)" = '{"state":"locked","entries":[]}' ] || fail "locked"

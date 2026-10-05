@@ -13,7 +13,15 @@ case "$1" in
     esac ;;
   login)
     if [ -f "$STUB_DIR/login-fails" ]; then echo "Username or password is incorrect. Try again." >&2; exit 1; fi
+    # A new device is refused, as the real agent logs it, until it is registered.
+    if [ -f "$STUB_DIR/new-device" ] && [ ! -f "$STUB_DIR/registered" ]; then
+      mkdir -p "$XDG_DATA_HOME/rbw"
+      echo "WARN rbw::api unexpected error: device_error, New device verification required" >> "$XDG_DATA_HOME/rbw/agent.err"
+      echo "failed to log in to bitwarden instance: api request returned error: 400" >&2
+      exit 1
+    fi
     mkdir -p "$XDG_DATA_HOME/rbw" && touch "$XDG_DATA_HOME/rbw/$(cfg email).json" ;;
+  register) echo register >> "$STUB_DIR/calls"; touch "$STUB_DIR/registered" ;;
   unlocked) [ -f "$STUB_DIR/unlocked" ] ;;
   unlock) touch "$STUB_DIR/unlocked" ;;
   lock) rm -f "$STUB_DIR/unlocked" ;;
