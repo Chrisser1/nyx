@@ -62,3 +62,15 @@ its own cliphist watchers, so `services.cliphist` must be off.
 `nyx:toggleEmoji` searches emoji by name and CLDR keyword; Enter copies, the
 drawer holds skin tones. Recently used emoji come first. With
 `programs.nyx.emoji.type`, the pick is also typed into the focused window.
+
+## Window switcher
+
+Live previews, most recently focused first. Bind `nyx:windowSwitcher` and
+`nyx:windowSwitcherBack` to Alt+Tab and Alt+Shift+Tab, and
+`nyx:windowSwitcherCommit` to the Alt release:
+
+```lua
+hl.bind("ALT + Tab", hl.dsp.global("nyx:windowSwitcher"))
+hl.bind("ALT + SHIFT + Tab", hl.dsp.global("nyx:windowSwitcherBack"))
+hl.bind("ALT + ALT_L", hl.dsp.global("nyx:windowSwitcherCommit"), { release = true, non_consuming = true })
+```

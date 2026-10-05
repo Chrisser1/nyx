@@ -48,6 +48,8 @@
 
       colors = qmlTest "colors" { };
 
+      switcher = qmlTest "switcher" { };
+
       clipboard-panel = qmlTest "clipboard" {
         inputs = [ helpers.clipboard pkgs.imagemagick ];
         setup = ''

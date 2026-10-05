@@ -28,12 +28,15 @@ Singleton {
   property string sysMonitorId: ""
   property bool clipboardOpen: false
   property string clipboardMonitorId: ""
+  property bool switcherOpen: false
+  property string switcherMonitorId: ""
   property bool mediaOpen: false
   property string mediaMonitorId: ""
   // Window x of the bar widget's centre; the panel hangs under it.
   property real mediaAnchorX: 0
   property bool overlayOpen: root.launcherOpen || root.trayMenuOpen || root.calendarOpen
     || root.wifiOpen || root.sysOpen || root.mediaOpen || root.clipboardOpen
+    || root.switcherOpen
   property QsMenuHandle activeMenu: null
   property bool trayMenuOpen: false
   property int menuDirection: Qt.LeftToRight
@@ -202,6 +205,17 @@ Singleton {
     }
   }
 
+  // Alt+Tab; services/WindowSwitcher drives it.
+  function openSwitcher(id = Config.primaryDisplay) {
+    root.closeAll()
+    root.switcherMonitorId = id
+    root.switcherOpen = true
+  }
+
+  function closeSwitcher() {
+    root.switcherOpen = false
+  }
+
   // Escape and click-outside. The launcher is guarded because closing it
   // restarts the reset timer, which would clobber a launcher opened meanwhile.
   function closeAll() {
@@ -210,6 +224,7 @@ Singleton {
     root.closeSys()
     root.closeMedia()
     root.closeClipboard()
+    root.closeSwitcher()
     if (root.trayMenuOpen) root.closeTrayMenu()
     if (root.launcherOpen) root.closeLauncher()
   }

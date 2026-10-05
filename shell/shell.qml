@@ -21,6 +21,7 @@ import qs.modules.clipboard
 import qs.modules.network
 import qs.modules.media
 import qs.modules.system
+import qs.modules.switcher
 import qs.modules.tray
 import QtQuick
 import Quickshell.Wayland
@@ -54,6 +55,28 @@ ShellRoot {
     name: "toggleClipboard"
     description: "Toggles the clipboard history"
     onPressed: GlobalState.toggleClipboard(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
+  }
+
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "windowSwitcher"
+    description: "Opens the window switcher, or selects the next window"
+    onPressed: WindowSwitcher.next()
+  }
+
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "windowSwitcherBack"
+    description: "Opens the window switcher, or selects the previous window"
+    onPressed: WindowSwitcher.previous()
+  }
+
+  // Bound to the Alt release; focuses the selection.
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "windowSwitcherCommit"
+    description: "Focuses the window selected in the switcher"
+    onPressed: WindowSwitcher.commit()
   }
 
   Variants {
@@ -112,6 +135,7 @@ ShellRoot {
             || (GlobalState.sysOpen && GlobalState.sysMonitorId === scope.monitorId)
             || (GlobalState.mediaOpen && GlobalState.mediaMonitorId === scope.monitorId)
             || (GlobalState.clipboardOpen && GlobalState.clipboardMonitorId === scope.monitorId)
+            || (GlobalState.switcherOpen && GlobalState.switcherMonitorId === scope.monitorId)
           // Deliberately empty, for every overlay. Hyprland fires `cleared`
           // immediately after the grab activates, so closing from here shuts
           // the panel the moment it opens. Click-outside is handled instead by
@@ -199,6 +223,7 @@ ShellRoot {
               // Only the monitor the launcher/clipboard/tray menu is on dims.
               when: ((GlobalState.launcherOpen && GlobalState.launcherMonitorId === scope.monitorId)
                   || (GlobalState.clipboardOpen && GlobalState.clipboardMonitorId === scope.monitorId)
+                  || (GlobalState.switcherOpen && GlobalState.switcherMonitorId === scope.monitorId)
                   || (GlobalState.trayMenuOpen && Hyprland.focusedMonitor?.name === scope.monitorId))
                 && scope.windows.length > 0
               PropertyChanges { content.color: Functions.transparentize("#000", 0.7) }
@@ -241,6 +266,10 @@ ShellRoot {
         }
 
         ClipboardPanel {
+          monitorId: scope.monitorId
+        }
+
+        WindowSwitcherPanel {
           monitorId: scope.monitorId
         }
 

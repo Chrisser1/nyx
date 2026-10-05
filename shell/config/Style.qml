@@ -77,6 +77,12 @@ Singleton {
   }
   readonly property Clipboard clipboard: Clipboard { }
 
+  component Switcher: QtObject {
+    readonly property int cardWidth: 300 * Config.scale
+    readonly property int cardHeight: 220 * Config.scale
+  }
+  readonly property Switcher switcher: Switcher { }
+
   component Sysmon: QtObject {
     readonly property int width: 380 * Config.scale
     // Tall: four stacked sections plus the process list, which is the only one
