@@ -4,3 +4,7 @@ The QML under shell/ started as a copy of the Quickshell config in
 N1njaflam1ng0/erebus (https://github.com/N1njaflam1ng0/erebus), which is itself
 adapted from roosta/dotfiles (https://github.com/roosta/dotfiles), GPLv3, by
 Daniel Berg. Per-file headers credit the original where it applies.
+
+Theme templates under theme/templates/ are adapted from noctalia
+(https://github.com/noctalia-dev/noctalia), MIT License, Copyright (c) 2026
+noctalia-dev.

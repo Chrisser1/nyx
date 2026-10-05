@@ -34,4 +34,18 @@ nix flake check    # builds the shell, shellchecks and tests the helpers
 
 - `shell/` QML (`config/Host.qml` is generated on build)
 - `scripts/` helper sources, built by `nix/_helpers`
+- `theme/` matugen templates and the base16 converter, driven by `nyx-theme`
+- `tests/` headless QML tests
 - `nix/` flake-parts modules: package, home-manager and NixOS modules, checks
+
+## Theming
+
+```sh
+nyx-theme scheme gruvbox-dark-medium base0B   # any base16 scheme, optional accent slot
+nyx-theme wallpaper ~/Pictures/wall.png       # Material You from an image or video
+nyx-theme mode light
+nyx-theme schemes
+```
+
+The choice persists in `$XDG_STATE_HOME/nyx/theme.json`; `programs.nyx.theme`
+only sets the initial one. Rendered targets are `programs.nyx.theme.targets`.
