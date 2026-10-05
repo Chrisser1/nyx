@@ -33,6 +33,7 @@
     shell = import ./_package {
       inherit pkgs lib helpers;
       inherit (cfg) outputs terminal;
+      iconTheme = cfg.iconTheme.name;
       hyprland = cfg.hyprlandPackage;
     };
 
@@ -90,6 +91,19 @@
         primary = role "Output for notification toasts. Empty follows the focused output.";
         left = role "Output in the left role, if any.";
         right = role "Output in the right role, if any.";
+      };
+
+      iconTheme = {
+        name = mkOption {
+          type = types.str;
+          default = "Papirus-Dark";
+          description = "Icon theme for app, tray and launcher icons.";
+        };
+        package = mkOption {
+          type = types.package;
+          default = pkgs.papirus-icon-theme;
+          description = "Package providing `iconTheme.name`.";
+        };
       };
 
       terminal = mkOption {
@@ -168,7 +182,7 @@
     config = lib.mkIf cfg.enable {
       programs.nyx.theme.targets = lib.mapAttrs (_: lib.mapAttrs (_: lib.mkDefault)) builtinTargets;
 
-      home.packages = [ shell gslapper theming.theme ] ++ helpers.all;
+      home.packages = [ shell gslapper theming.theme cfg.iconTheme.package ] ++ helpers.all;
 
       home.activation.nyxTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${lib.getExe theming.theme} apply || echo "nyx: theme apply failed" >&2

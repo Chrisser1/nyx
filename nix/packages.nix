@@ -34,6 +34,7 @@
         hyprland = pkgs.hyprland;
         outputs = { primary = ""; left = ""; right = ""; };
         terminal = "kitty";
+        iconTheme = "Papirus-Dark";
       };
       theme = theming.theme;
     };

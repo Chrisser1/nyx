@@ -1,5 +1,5 @@
 # shell/ with a generated Host.qml, run from the store as `nyx-shell`.
-{ pkgs, lib, helpers, hyprland, outputs, terminal }:
+{ pkgs, lib, helpers, hyprland, outputs, terminal, iconTheme }:
 let
   exe = lib.getExe;
 
@@ -50,7 +50,10 @@ let
 in
 pkgs.writeShellApplication {
   name = "nyx-shell";
-  # qt6ct supplies the icon theme.
-  runtimeEnv.QT_QPA_PLATFORMTHEME = "qt6ct";
+  # qt6ct for Qt styling; icons come from QS_ICON_THEME.
+  runtimeEnv = {
+    QT_QPA_PLATFORMTHEME = "qt6ct";
+    QS_ICON_THEME = iconTheme;
+  };
   text = ''exec ${exe pkgs.quickshell} -p ${src} "$@"'';
 }
