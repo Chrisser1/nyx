@@ -248,15 +248,6 @@ Singleton {
       iconId: "preferences-desktop-display"
     },
     {
-      id: "nyx-display-mirror",
-      name: "Mirror displays",
-      comment: "Mirror one monitor onto another, or undo an active mirror",
-      genericName: "Display",
-      categories: ["Display", "Mirror"],
-      script: [Host.monitors, "mirror"],
-      iconId: "preferences-desktop-remote-desktop"
-    },
-    {
       id: "nyx-display-save",
       name: "Save monitor layout",
       comment: "Write the current arrangement to ~/.config/hypr/monitors.lua",

@@ -27,6 +27,7 @@
     stubbed = name: runtimeInputs: env: import ./_helpers/script.nix { inherit pkgs; } name runtimeInputs env;
     dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ] { };
     tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ] { };
+    monitorsStubbed = stubbed "monitors" [ (stub "hyprctl") (stub "notify-send") pkgs.jq pkgs.coreutils ] { };
     calendarStubbed = stubbed "calendar" [ (stub "nyx-calendar-backend") (stub "evolution") ] { };
     # The default keybinds as Lua and as the shell's JSON.
     keybindsRendered =
@@ -90,6 +91,16 @@
             --replace-fail '"nyx-theme"' '"${lib.getExe nyx.theming.theme}"' \
             --replace-fail '"nyx-wallpaper"' '"${lib.getExe helpers.wallpaper}"' \
             --replace-fail '"nyx-emoji"' '"${lib.getExe helpers.emoji}"'
+        '';
+      };
+
+      display-launcher = qmlTest "displays" {
+        setup = ''
+          export STUB_DIR=$PWD/stub
+          mkdir -p $STUB_DIR
+          cp --no-preserve=mode ${../tests/displays/monitors.json} $STUB_DIR/monitors.json
+          cp --no-preserve=mode ${../tests/displays/mirrored.json} $STUB_DIR/mirrored.json
+          substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-monitors"' '"${lib.getExe monitorsStubbed}"'
         '';
       };
 
@@ -209,6 +220,13 @@
           cp ${keybindsRendered.json} $HOME/.config/nyx/keybinds.json
         '';
       };
+
+      monitors = pkgs.runCommand "nyx-monitors-test" {
+        nativeBuildInputs = [ monitorsStubbed pkgs.jq ];
+      } ''
+        bash ${./_helpers/monitors-test.sh}
+        touch $out
+      '';
 
       bitwarden = pkgs.runCommand "nyx-bitwarden-test" {
         nativeBuildInputs = [ bitwardenStubbed pkgs.jq (stub "wl-copy") (stub "rbw") ];

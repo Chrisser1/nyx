@@ -1,0 +1,4 @@
+[
+  {"id":0,"name":"HDMI-A-1","description":"Dell (HDMI-A-1)","width":1920,"height":1080,"refreshRate":60,"x":0,"y":0,"scale":1,"disabled":false,"mirrorOf":"none","focused":false},
+  {"id":1,"name":"DP-1","description":"LG (DP-1)","width":2560,"height":1440,"refreshRate":143.97,"x":1920,"y":0,"scale":1,"disabled":false,"mirrorOf":"none","focused":true}
+]

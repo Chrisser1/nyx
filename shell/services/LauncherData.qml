@@ -51,6 +51,8 @@ Singleton {
     id: monProc
     command: [Host.monitors, "list"]
     running: false
+    stderr: StdioCollector { id: monErr }
+    onExited: code => { if (code !== 0) console.warn(`nyx: monitor list failed: ${monErr.text.trim()}`) }
     stdout: StdioCollector {
       onStreamFinished: {
         const rows = [];
@@ -114,6 +116,35 @@ Singleton {
             script: [Host.monitors, "toggle", m.name],
             actions: actions
           });
+        }
+
+        // Mirroring gets top-level cards too: one per source and target, or one
+        // to stop an active mirror.
+        for (const dst of rows) {
+          if (dst.mirrorOf !== "none") {
+            out.push({
+              id: `nyx-unmirror-${dst.name}`,
+              name: `Stop mirroring on ${dst.name}`,
+              comment: `${dst.name} shows ${dst.mirrorOf}`,
+              genericName: "Mirror",
+              categories: ["Display", "Mirror"],
+              iconId: "preferences-desktop-remote-desktop",
+              script: [Host.monitors, "unmirror", dst.name]
+            });
+            continue;
+          }
+          for (const src of rows) {
+            if (src.name === dst.name || !src.enabled || src.mirrorOf !== "none") continue;
+            out.push({
+              id: `nyx-mirror-${src.name}-${dst.name}`,
+              name: `Mirror ${src.name} onto ${dst.name}`,
+              comment: `${dst.name} will show what ${src.name} shows`,
+              genericName: "Mirror",
+              categories: ["Display", "Mirror"],
+              iconId: "preferences-desktop-remote-desktop",
+              script: [Host.monitors, "mirror", src.name, dst.name]
+            });
+          }
         }
         root.monitorEntries = out;
       }

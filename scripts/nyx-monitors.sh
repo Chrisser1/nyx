@@ -16,16 +16,18 @@ hl_eval() {
   esac
 }
 
-# name, description, WxH@Hz, XxY, scale, enabled|disabled, mirrored, focused
+# name, description, WxH@Hz, XxY, scale, enabled|disabled, mirrored output (or none), focused.
+# hyprctl reports a mirror source by id, so it is looked up by name here.
 list() {
-  all | jq -r '.[] | [
+  all | jq -r '. as $all | .[] | [
     .name,
     (.description // "" | split(" (")[0]),
     ((.width|tostring) + "x" + (.height|tostring) + "@" + ((.refreshRate // 0)|floor|tostring)),
     ((.x|tostring) + "x" + (.y|tostring)),
     ((.scale // 1)|tostring),
     (if .disabled then "disabled" else "enabled" end),
-    (if (.mirrorOf // "none") == "none" then "none" else "yes" end),
+    (if (.mirrorOf // "none") == "none" then "none"
+     else (.mirrorOf | tostring) as $id | ($all | map(select((.id | tostring) == $id)) | .[0].name) // $id end),
     (if .focused then "focused" else "-" end)
   ] | @tsv'
 }
