@@ -25,6 +25,9 @@ Item {
   anchors.fill: parent
   visible: card.opacity > 0
 
+  // What the list highlights, which must always be the switcher's selection.
+  readonly property int shownIndex: list.currentIndex
+
   onActiveChanged: if (root.active) list.forceActiveFocus()
 
   BorderRect {
@@ -65,6 +68,8 @@ Item {
 
       model: root.active ? WindowSwitcher.windows : []
       currentIndex: WindowSwitcher.index
+      // A model reset puts currentIndex back to 0 and drops the binding; restore it.
+      onCountChanged: currentIndex = Qt.binding(() => WindowSwitcher.index)
 
       Keys.onPressed: event => {
         const back = event.modifiers & Qt.ShiftModifier;

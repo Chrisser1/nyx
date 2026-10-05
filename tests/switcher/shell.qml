@@ -42,7 +42,16 @@ ShellRoot {
         root.expect(1, "0xc");
         HyprlandData.windowList = [];
         if (WindowSwitcher.windows.length !== 3) root.fail("snapshot changed while open");
+      } },
+    // The panel has to render the first press before the next one arrives.
+    { what: "first press shown", settle: 5, ready: () => true,
+      act: () => {
+        if (panel.shownIndex !== 1) root.fail(`first press highlights ${panel.shownIndex}, selection 1`);
         WindowSwitcher.next();
+      } },
+    { what: "second press shown", settle: 5, ready: () => true,
+      act: () => {
+        if (panel.shownIndex !== 2) root.fail(`second press highlights ${panel.shownIndex}, selection 2`);
         root.expect(2, "0xa");
         WindowSwitcher.next();
         root.expect(0, "0xb");
