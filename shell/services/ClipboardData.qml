@@ -8,6 +8,7 @@ import Quickshell
 import Quickshell.Io
 import qs
 import qs.config
+import qs.utils
 
 Singleton {
   id: root
@@ -33,8 +34,12 @@ Singleton {
     return query.trim() ? root.entries.filter(e => root.matches(e, query.trim())) : root.entries;
   }
 
+  // Overlapping refreshes run one after another.
+  property bool refreshPending: false
+
   function refresh() {
-    listProc.running = true;
+    if (listProc.running) root.refreshPending = true;
+    else listProc.running = true;
   }
 
   function select(entry) {
@@ -49,37 +54,23 @@ Singleton {
     detailProc.running = true;
   }
 
-  function copy(entry) { root.run(["copy", entry.id]); }
-  function remove(entry) { root.run(["delete", entry.id]); }
-  function togglePin(entry) { root.run([entry.pinned ? "unpin" : "pin", entry.id]); }
-  function wipe() { root.run(["wipe"]); }
+  function copy(entry) { actions.run([Host.clipboard, "copy", entry.id]); }
+  function remove(entry) { actions.run([Host.clipboard, "delete", entry.id]); }
+  function togglePin(entry) { actions.run([Host.clipboard, entry.pinned ? "unpin" : "pin", entry.id]); }
+  function wipe() { actions.run([Host.clipboard, "wipe"]); }
 
-  // Actions run one at a time, in order, each followed by a refresh.
-  property list<var> queue: []
-
-  function run(args) {
-    root.queue = [...root.queue, [Host.clipboard, ...args]];
-    if (!actionProc.running) root.next();
-  }
-
-  function next() {
-    if (!root.queue.length) {
-      root.refresh();
-      return;
-    }
-    actionProc.command = root.queue[0];
-    root.queue = root.queue.slice(1);
-    actionProc.running = true;
-  }
-
-  Process {
-    id: actionProc
-    onExited: root.next()
+  readonly property CommandQueue actions: CommandQueue {
+    onDrained: root.refresh()
   }
 
   Process {
     id: listProc
     command: [Host.clipboard, "list"]
+    onExited: {
+      if (!root.refreshPending) return;
+      root.refreshPending = false;
+      Qt.callLater(root.refresh);
+    }
     stdout: StdioCollector {
       onStreamFinished: {
         try {
@@ -112,6 +103,6 @@ Singleton {
     path: `${Quickshell.env("XDG_STATE_HOME") || `${Quickshell.env("HOME")}/.local/state`}/nyx/clipboard/seen.tsv`
     watchChanges: true
     printErrors: false
-    onFileChanged: if (GlobalState.clipboardOpen) root.refresh()
+    onFileChanged: if (GlobalState.clipboardOpen && !root.actions.busy) root.refresh()
   }
 }
