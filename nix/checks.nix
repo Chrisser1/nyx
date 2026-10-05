@@ -42,7 +42,7 @@
       };
     # Prints one frame every 100 ms, like cava with four raw ascii bars.
     fakeCava = pkgs.writeShellScript "fake-cava" "while :; do echo \"0;50;100;20\"; sleep 0.1; done";
-    bitwardenStubbed = stubbed "bitwarden" (map stub [ "rbw" "wl-copy" "wl-paste" "notify-send" ] ++ [ pkgs.jq pkgs.coreutils pkgs.findutils pkgs.gnugrep ]) { NYX_BITWARDEN_CLEAR = "1"; NYX_BITWARDEN_PINENTRY = "/stub/pinentry"; };
+    bitwardenStubbed = stubbed "bitwarden" (map stub [ "rbw" "wl-copy" "wl-paste" "notify-send" "wtype" ] ++ [ pkgs.jq pkgs.coreutils pkgs.findutils pkgs.gnugrep ]) { NYX_BITWARDEN_CLEAR = "1"; NYX_BITWARDEN_PINENTRY = "/stub/pinentry"; NYX_BITWARDEN_TYPE_DELAY = "0"; };
 
     # Runs tests/<name>/shell.qml headless against a copy of shell/; it prints PASS.
     qmlTest = name: { inputs ? [ ], setup ? "" }:
@@ -127,6 +127,9 @@
           export STUB_DIR=$PWD/stub
           mkdir -p $STUB_DIR
           cp --no-preserve=mode ${../tests/bitwarden/list.json} $STUB_DIR/list.json
+          mkdir -p $STUB_DIR/secrets
+          printf hunter2 > $STUB_DIR/secrets/u1.password
+          printf chris > $STUB_DIR/secrets/u1.username
           mkdir -p $STUB_DIR/cfg
           echo me@example.com > $STUB_DIR/cfg/email
           export XDG_DATA_HOME=$HOME/.local/share

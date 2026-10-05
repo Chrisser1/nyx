@@ -105,8 +105,8 @@ Singleton {
     {
       id: "nyx-mode-bitwarden",
       name: "Bitwarden",
-      comment: "Copy passwords, usernames and TOTP codes from the vault",
-      mode: "bitwarden",
+      comment: "Copy or type passwords, usernames and TOTP codes from the vault",
+      panel: "bitwarden",
       genericName: "Menu",
       categories: ["Security", "Utility"],
       iconId: "dialog-password"

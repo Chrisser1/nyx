@@ -18,6 +18,7 @@ import qs.modules.bar
 import qs.modules.launcher
 import qs.modules.calendar
 import qs.modules.clipboard
+import qs.modules.bitwarden
 import qs.modules.docker
 import qs.modules.audio
 import qs.modules.network
@@ -65,6 +66,18 @@ ShellRoot {
     name: "toggleDocker"
     description: "Toggles the Docker containers panel"
     onPressed: GlobalState.toggleDocker(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
+  }
+
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "toggleBitwarden"
+    description: "Toggles the Bitwarden vault panel"
+    onPressed: {
+      // Taken before the panel opens, to suggest entries for this window.
+      const w = HyprlandData.activeTopLevel
+      VaultData.hint = w ? `${w.title ?? ""} ${w.class ?? ""}` : ""
+      GlobalState.toggleBitwarden(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
+    }
   }
 
   GlobalShortcut { // qmllint disable unresolved-type
@@ -283,6 +296,10 @@ ShellRoot {
         }
 
         WindowSwitcherPanel {
+          monitorId: scope.monitorId
+        }
+
+        BitwardenPanel {
           monitorId: scope.monitorId
         }
 

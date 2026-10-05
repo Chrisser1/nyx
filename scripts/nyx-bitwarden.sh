@@ -1,11 +1,24 @@
 # Bitwarden through rbw. Secrets are copied as sensitive, so clipboard history
 # skips them, and cleared after NYX_BITWARDEN_CLEAR seconds (0 keeps them).
 usage() {
-  echo "usage: nyx-bitwarden {list|setup <email> <com|eu|url>|unlock|lock|sync|copy <id> password|username|totp|notes}" >&2
+  echo "usage: nyx-bitwarden {list|setup <email> <com|eu|url>|unlock|lock|sync|copy <id> password|username|totp|notes|type <id> password|username|totp}" >&2
   exit 2
 }
 
 notify() { notify-send -a nyx -i dialog-password "Bitwarden" "$1" || true; }
+
+# Prints one field of an entry, or tells the user why it cannot.
+read_secret() {
+  local secret
+  case "$2" in
+    password) secret=$(rbw get "$1") ;;
+    username|notes) secret=$(rbw get --field "$2" "$1") ;;
+    totp) secret=$(rbw code "$1") ;;
+    *) usage ;;
+  esac || { notify "Could not read the $2"; return 1; }
+  [ -n "$secret" ] || { notify "This entry has no $2"; return 1; }
+  printf '%s' "$secret"
+}
 
 case "${1:-}" in
   list)
@@ -68,13 +81,7 @@ case "${1:-}" in
   unlock|lock|sync) rbw "$1" ;;
   copy)
     [ $# -ge 3 ] || usage
-    case "$3" in
-      password) secret=$(rbw get "$2") ;;
-      username|notes) secret=$(rbw get --field "$3" "$2") ;;
-      totp) secret=$(rbw code "$2") ;;
-      *) usage ;;
-    esac || { notify "Could not read the $3"; exit 1; }
-    [ -n "$secret" ] || { notify "This entry has no $3"; exit 1; }
+    secret=$(read_secret "$2" "$3") || exit $?
     printf '%s' "$secret" | wl-copy --sensitive
     if [ "$NYX_BITWARDEN_CLEAR" -gt 0 ]; then
       # Detached, so callers do not wait; only clears if still ours.
@@ -83,5 +90,12 @@ case "${1:-}" in
         [ "$(wl-paste --no-newline 2>/dev/null)" != "$secret" ] || wl-copy --clear
       ) < /dev/null > /dev/null 2>&1 &
     fi ;;
+  type)
+    # Types a field into the focused window, so it never touches the clipboard.
+    # The caller has just closed its panel, so wait for focus to come back.
+    [ $# -ge 3 ] || usage
+    secret=$(read_secret "$2" "$3") || exit $?
+    sleep "$NYX_BITWARDEN_TYPE_DELAY"
+    wtype -- "$secret" ;;
   *) usage ;;
 esac

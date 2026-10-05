@@ -74,6 +74,18 @@ nyx-bitwarden copy u1 totp
 [ "$(cat "$STUB_DIR/clip")" = 123456 ] || fail "totp"
 if nyx-bitwarden copy u2 totp; then fail "missing totp succeeded"; fi
 [ "$(cat "$STUB_DIR/clip")" = 123456 ] || fail "failed copy touched the clipboard"
+
+# Typing goes to the focused window and never through the clipboard.
+nyx-bitwarden type u1 password
+[ "$(cat "$STUB_DIR/typed")" = hunter2 ] || fail "password typed"
+nyx-bitwarden type u1 username
+[ "$(cat "$STUB_DIR/typed")" = chris ] || fail "username typed"
+[ "$(cat "$STUB_DIR/clip")" = 123456 ] || fail "typing touched the clipboard"
+rm "$STUB_DIR/typed"
+if nyx-bitwarden type u2 totp; then fail "typing a missing totp succeeded"; fi
+[ ! -e "$STUB_DIR/typed" ] || fail "nothing typed for a missing field"
+if nyx-bitwarden type u1 notes 2>/dev/null; then fail "unknown type field accepted"; fi
+if nyx-bitwarden type u1 2>/dev/null; then fail "type without a field accepted"; fi
 grep -q "Could not read the totp" "$STUB_DIR/notifications" || fail "failure notified"
 
 # Cleared after NYX_BITWARDEN_CLEAR seconds, unless something else was copied.

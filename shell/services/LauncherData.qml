@@ -396,90 +396,13 @@ Singleton {
   }
 
   // ---- Bitwarden -----------------------------------------------------------
-  // From `nyx-bitwarden list`, which never prompts. A locked vault shows one
-  // card that unlocks it; Enter copies the password (or the note), and the
-  // drawer holds the other fields.
-  property string vaultState: ""
-  property list<var> vaultEntries: []
-  property list<var> bitwardenData: vaultEntries.map(a => ({ name: Fuzzy.prepare(a.search), entry: a }))
-
-  function refreshBitwarden() { vaultProc.running = true }
-
-  function vaultEntry(e) {
-    const copy = field => [Host.bitwarden, "copy", e.id, field];
-    const login = e.type === "Login";
-    return {
-      id: `nyx-bw-${e.id}`,
-      name: e.name,
-      genericName: e.user || e.type,
-      comment: e.uri,
-      categories: [e.folder, e.type].filter(Boolean),
-      search: [e.name, e.user, e.folder, e.uri].join(" "),
-      iconId: login ? "dialog-password" : "text-x-generic",
-      script: copy(login ? "password" : "notes"),
-      actions: login ? [
-        { id: `nyx-bw-${e.id}-user`, name: "Copy username", script: copy("username") },
-        { id: `nyx-bw-${e.id}-totp`, name: "Copy TOTP", script: copy("totp") },
-        { id: `nyx-bw-${e.id}-notes`, name: "Copy notes", script: copy("notes") }
-      ] : []
-    };
-  }
-
-  readonly property var vaultControls: [
-    { id: "nyx-bw-sync", name: "Sync vault", genericName: "Bitwarden", search: "sync vault",
-      comment: "Fetch changes from the server", iconId: "view-refresh", script: [Host.bitwarden, "sync"] },
-    { id: "nyx-bw-lock", name: "Lock vault", genericName: "Bitwarden", search: "lock vault",
-      comment: "Forget the master password until the next unlock", iconId: "system-lock-screen",
-      script: [Host.bitwarden, "lock"] }
-  ]
-
-  Process {
-    id: vaultProc
-    command: [Host.bitwarden, "list"]
-    stdout: StdioCollector {
-      onStreamFinished: {
-        let data;
-        try {
-          data = JSON.parse(this.text);
-        } catch (e) {
-          console.warn(`nyx: bad bitwarden list: ${e}`);
-          return;
-        }
-        root.vaultState = data.state;
-        if (data.state === "unlocked") {
-          root.vaultEntries = [...data.entries.map(root.vaultEntry), ...root.vaultControls];
-        } else if (data.state === "locked") {
-          root.vaultEntries = [{
-            id: "nyx-bw-unlock", name: "Unlock vault", genericName: "Bitwarden", search: "unlock vault",
-            comment: "Asks for the master password", iconId: "dialog-password", unlockVault: true
-          }];
-        } else {
-          root.vaultEntries = [];
-        }
-      }
-    }
-  }
-
-  // Unlocking prompts through pinentry, so the launcher closes first and
-  // reopens on the vault once it is open.
-  function unlockVault(monitorId) {
-    unlockProc.monitorId = monitorId;
-    unlockProc.running = true;
-  }
-
-  Process {
-    id: unlockProc
-    property string monitorId: ""
-    command: [Host.bitwarden, "unlock"]
-    onExited: code => {
-      if (code === 0) GlobalState.openLauncher({ id: unlockProc.monitorId, mode: "bitwarden" });
-    }
-  }
+  // The vault itself lives in VaultData and modules/bitwarden. The launcher
+  // only hosts the login form, for a vault that is not set up yet.
 
   // Before login the search box is the form: type the email, pick a region
   // (or paste a server URL and press Enter on its card), then Enter on the
   // login card. The password and 2FA code are asked for in pinentry.
-  readonly property bool vaultNeedsSetup: vaultState === "unconfigured" || vaultState === "login"
+  readonly property bool vaultNeedsSetup: VaultData.needsSetup
   property string vaultRegion: "com"
   readonly property var vaultRegions: [
     { id: "com", name: "Bitwarden.com", comment: "United States" },
@@ -532,7 +455,9 @@ Singleton {
     id: loginProc
     property string monitorId: ""
     onExited: code => {
-      if (code === 0) GlobalState.openLauncher({ id: loginProc.monitorId, mode: "bitwarden" });
+      if (code !== 0) return;
+      VaultData.refresh();
+      GlobalState.openBitwarden(loginProc.monitorId);
     }
   }
 

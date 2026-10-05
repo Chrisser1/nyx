@@ -126,7 +126,7 @@ Item {
       else if (GlobalState.launcherMode === "theme") LauncherData.refreshThemes();
       else if (GlobalState.launcherMode === "display") LauncherData.refreshMonitors();
       else if (GlobalState.launcherMode === "emoji") LauncherData.refreshEmoji();
-      else if (GlobalState.launcherMode === "bitwarden") LauncherData.refreshBitwarden();
+      else if (GlobalState.launcherMode === "bitwarden") VaultData.refresh();
       root.evaluateQuery();
     }
     function onSearchQueryChanged() {
@@ -187,17 +187,6 @@ Item {
     onPressed: {
       if (Hyprland.focusedMonitor?.name === root.monitorId) {
         GlobalState.toggleLauncher({ id: Hyprland.focusedMonitor?.name, mode: "emoji" })
-      }
-    }
-  }
-
-  GlobalShortcut { // qmllint disable unresolved-type
-    appid: "nyx"
-    name: "toggleBitwarden"
-    description: "Opens the launcher on the Bitwarden vault"
-    onPressed: {
-      if (Hyprland.focusedMonitor?.name === root.monitorId) {
-        GlobalState.toggleLauncher({ id: Hyprland.focusedMonitor?.name, mode: "bitwarden" })
       }
     }
   }
@@ -312,7 +301,7 @@ Item {
           return LauncherData.searchEmoji(q)
         } else if (s === "bitwarden") {
           const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/bitwarden`, "")
-          return LauncherData.vaultNeedsSetup ? LauncherData.setupEntries(q) : Fuzzy.query(q, LauncherData.bitwardenData)
+          return LauncherData.setupEntries(q)
         } else if (s === "calc") {
           return LauncherData.calcData
         } else {
@@ -332,6 +321,11 @@ Item {
           Notifications.attemptInvokeAction(entry.notificationId, "default")
           GlobalState.closeLauncher()
         } else if (s === "menu") {
+          if (entry.panel === "bitwarden") {
+            VaultData.hint = ""
+            GlobalState.openBitwarden(root.monitorId)
+            return
+          }
           GlobalState.launcherMode = entry.mode
           GlobalState.searchQuery = ""
         } else if (s === "theme") {
@@ -345,9 +339,6 @@ Item {
           LauncherData.vaultRegion = entry.setRegion
           // A pasted server URL is not an email, so clear it for the next step.
           if (entry.setRegion.startsWith("http")) GlobalState.searchQuery = ""
-        } else if (s === "bitwarden" && entry.unlockVault) {
-          GlobalState.closeLauncher()
-          LauncherData.unlockVault(root.monitorId)
         } else if (s === "power"
           || s === "display"
           || s === "audio"
