@@ -1,0 +1,6 @@
+nyx is licensed under the GNU General Public License v3 (see LICENSE).
+
+The QML under shell/ started as a copy of the Quickshell config in
+N1njaflam1ng0/erebus (https://github.com/N1njaflam1ng0/erebus), which is itself
+adapted from roosta/dotfiles (https://github.com/roosta/dotfiles), GPLv3, by
+Daniel Berg. Per-file headers credit the original where it applies.
