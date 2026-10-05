@@ -158,44 +158,6 @@ Singleton {
     }));
   }
 
-  // ---- Clipboard history -----------------------------------------------------
-  // Backed by `nyx-clipboard list`, which emits "<id>\t<preview>" per line
-  // (cliphist's own format). Refreshed each time the mode is opened, since the
-  // history changes constantly outside the shell.
-  property list<var> clipboardEntries: []
-  property list<var> clipboardData: clipboardEntries.map(a => ({ name: Fuzzy.prepare(a.name), entry: a }))
-
-  function refreshClipboard() { clipProc.running = true }
-
-  Process {
-    id: clipProc
-    command: [Host.clipboard, "list"]
-    running: false
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const out = [];
-        for (const line of this.text.split("\n")) {
-          if (!line.length) continue;
-          const tab = line.indexOf("\t");
-          if (tab < 0) continue;
-          const id = line.slice(0, tab);
-          const preview = line.slice(tab + 1);
-          out.push({
-            id: `nyx-clip-${id}`,
-            clipId: id,
-            name: preview,
-            comment: "Copy this entry to the clipboard",
-            genericName: "Clipboard",
-            categories: ["Clipboard"],
-            iconId: preview.startsWith("[[ binary data") ? "image" : "edit-paste",
-            script: [Host.clipboard, "copy", id]
-          });
-        }
-        root.clipboardEntries = out;
-      }
-    }
-  }
-
   // ---- Wallpapers ------------------------------------------------------------
   // `nyx-wallpaper list` emits paths relative to the wallpaper root, so the
   // stored selection survives a rebuild or a store GC.

@@ -17,6 +17,7 @@ import Quickshell
 import qs.modules.bar
 import qs.modules.launcher
 import qs.modules.calendar
+import qs.modules.clipboard
 import qs.modules.network
 import qs.modules.media
 import qs.modules.system
@@ -46,6 +47,13 @@ ShellRoot {
     name: "toggleSystem"
     description: "Toggles the system panel"
     onPressed: GlobalState.toggleSys(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
+  }
+
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "toggleClipboard"
+    description: "Toggles the clipboard history"
+    onPressed: GlobalState.toggleClipboard(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
   }
 
   Variants {
@@ -103,6 +111,7 @@ ShellRoot {
             || (GlobalState.wifiOpen && GlobalState.wifiMonitorId === scope.monitorId)
             || (GlobalState.sysOpen && GlobalState.sysMonitorId === scope.monitorId)
             || (GlobalState.mediaOpen && GlobalState.mediaMonitorId === scope.monitorId)
+            || (GlobalState.clipboardOpen && GlobalState.clipboardMonitorId === scope.monitorId)
           // Deliberately empty, for every overlay. Hyprland fires `cleared`
           // immediately after the grab activates, so closing from here shuts
           // the panel the moment it opens. Click-outside is handled instead by
@@ -187,8 +196,9 @@ ShellRoot {
           states: [
             State {
               name: "open"
-              // Only the monitor the launcher/tray menu is actually on dims.
+              // Only the monitor the launcher/clipboard/tray menu is on dims.
               when: ((GlobalState.launcherOpen && GlobalState.launcherMonitorId === scope.monitorId)
+                  || (GlobalState.clipboardOpen && GlobalState.clipboardMonitorId === scope.monitorId)
                   || (GlobalState.trayMenuOpen && Hyprland.focusedMonitor?.name === scope.monitorId))
                 && scope.windows.length > 0
               PropertyChanges { content.color: Functions.transparentize("#000", 0.7) }
@@ -227,6 +237,10 @@ ShellRoot {
         }
 
         MediaPanel {
+          monitorId: scope.monitorId
+        }
+
+        ClipboardPanel {
           monitorId: scope.monitorId
         }
 

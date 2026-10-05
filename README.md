@@ -49,3 +49,10 @@ nyx-theme schemes
 
 The choice persists in `$XDG_STATE_HOME/nyx/theme.json`; `programs.nyx.theme`
 only sets the initial one. Rendered targets are `programs.nyx.theme.targets`.
+
+## Clipboard
+
+`hl.dsp.global("nyx:toggleClipboard")` opens the history: type to filter,
+Up/Down to move, Enter to copy, Shift+Delete to delete, Ctrl+P to pin. Pinned
+entries survive wipes and the `programs.nyx.clipboard.maxItems` limit. nyx runs
+its own cliphist watchers, so `services.cliphist` must be off.

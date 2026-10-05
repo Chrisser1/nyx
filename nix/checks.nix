@@ -15,7 +15,22 @@
       wallpaperDir = "${wallpapers}";
       defaultWallpaper = "";
       screenshotDir = "/tmp";
+      clipboardMaxItems = 500;
     };
+
+    # Runs tests/<name>/shell.qml headless against a copy of shell/; it prints PASS.
+    qmlTest = name: { inputs ? [ ], setup ? "" }:
+      pkgs.runCommand "nyx-${name}-test" { nativeBuildInputs = [ pkgs.quickshell ] ++ inputs; } ''
+        export HOME=$PWD/home XDG_CACHE_HOME=$PWD/cache XDG_STATE_HOME=$PWD/state
+        export XDG_RUNTIME_DIR=$PWD QT_QPA_PLATFORM=offscreen
+        mkdir -p $HOME $XDG_STATE_HOME/nyx
+        cp -r ${../shell} cfg && chmod -R u+w cfg
+        cp ${../tests/${name}/shell.qml} cfg/shell.qml
+        ${setup}
+        timeout 60 quickshell -p cfg 2>&1 | tee log
+        grep -q PASS log
+        touch $out
+      '';
   in {
     checks = {
       shell = config.packages.default;
@@ -28,13 +43,24 @@
         touch $out
       '';
 
-      colors = pkgs.runCommand "nyx-colors-test" { nativeBuildInputs = [ pkgs.quickshell ]; } ''
-        cp -r ${../tests/colors} cfg && chmod -R u+w cfg
-        mkdir -p cfg/config state/nyx
-        cp ${../shell/config/Colors.qml} cfg/config/Colors.qml
-        export HOME=$PWD XDG_STATE_HOME=$PWD/state XDG_RUNTIME_DIR=$PWD QT_QPA_PLATFORM=offscreen
-        timeout 30 quickshell -p cfg 2>&1 | tee log
-        grep -q PASS log
+      colors = qmlTest "colors" { };
+
+      clipboard-panel = qmlTest "clipboard" {
+        inputs = [ helpers.clipboard pkgs.imagemagick ];
+        setup = ''
+          substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-clipboard"' '"${lib.getExe helpers.clipboard}"'
+          printf 'Some notes\nsecond line\nthird' | nyx-clipboard store
+          printf '#b8bb26' | nyx-clipboard store
+          printf 'https://example.com' | nyx-clipboard store
+          magick -size 1362x766 gradient:red-blue image.png
+          nyx-clipboard store < image.png
+        '';
+      };
+
+      clipboard = pkgs.runCommand "nyx-clipboard-test" {
+        nativeBuildInputs = [ helpers.clipboard pkgs.imagemagick pkgs.jq ];
+      } ''
+        bash ${./_helpers/clipboard-test.sh}
         touch $out
       '';
 

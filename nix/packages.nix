@@ -23,6 +23,7 @@
       wallpaperDir = "/var/empty";
       defaultWallpaper = "";
       screenshotDir = "/tmp";
+      clipboardMaxItems = 500;
     };
   in {
     _module.args.nyx = { inherit theming helpers; };

@@ -107,7 +107,7 @@ Item {
     }
   }
 
-  // Clipboard history and the wallpaper list are read from external commands, so
+  // The wallpaper and monitor lists are read from external commands, so
   // re-read them on entering the mode rather than caching at startup.
   Connections {
     target: GlobalState
@@ -116,8 +116,7 @@ Item {
     }
     function onLauncherModeChanged() {
       if (!root.owner) return;
-      if (GlobalState.launcherMode === "clipboard") LauncherData.refreshClipboard();
-      else if (GlobalState.launcherMode === "wallpaper") LauncherData.refreshWallpapers();
+      if (GlobalState.launcherMode === "wallpaper") LauncherData.refreshWallpapers();
       else if (GlobalState.launcherMode === "display") LauncherData.refreshMonitors();
       root.evaluateQuery();
     }
@@ -146,17 +145,6 @@ Item {
     onPressed: {
       if (Hyprland.focusedMonitor?.name === root.monitorId) {
         GlobalState.toggleLauncher({id: Hyprland.focusedMonitor?.name, mode: "menu"})
-      }
-    }
-  }
-
-  GlobalShortcut { // qmllint disable unresolved-type
-    appid: "nyx"
-    name: "toggleClipboard"
-    description: "Opens the launcher in clipboard-history mode"
-    onPressed: {
-      if (Hyprland.focusedMonitor?.name === root.monitorId) {
-        GlobalState.toggleLauncher({ id: Hyprland.focusedMonitor?.name, mode: "clipboard" })
       }
     }
   }
@@ -271,9 +259,6 @@ Item {
         } else if (s === "utils") {
           const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/utils`, "")
           return Fuzzy.query(q, LauncherData.utilsData)
-        } else if (s === "clipboard") {
-          const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/clipboard`, "")
-          return Fuzzy.query(q, LauncherData.clipboardData)
         } else if (s === "wallpaper") {
           const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/wallpaper`, "")
           return Fuzzy.query(q, LauncherData.wallpaperData)
@@ -302,7 +287,6 @@ Item {
           || s === "display"
           || s === "audio"
           || s === "utils"
-          || s === "clipboard"
           || s === "wallpaper"
           || s === "calc"
           || s === "apps"

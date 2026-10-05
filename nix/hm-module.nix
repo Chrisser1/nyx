@@ -27,6 +27,7 @@
       wallpaperDir = cfg.wallpaper.directory;
       defaultWallpaper = cfg.wallpaper.default;
       screenshotDir = cfg.screenshotDirectory;
+      clipboardMaxItems = cfg.clipboard.maxItems;
     };
 
     shell = import ./_package {
@@ -121,6 +122,12 @@
         };
       };
 
+      clipboard.maxItems = mkOption {
+        type = types.ints.positive;
+        default = 500;
+        description = "History entries kept; pins do not count.";
+      };
+
       theme = {
         source = mkOption {
           type = types.enum [ "scheme" "wallpaper" ];
@@ -171,10 +178,27 @@
       gtk.gtk3.extraCss = lib.mkIf cfg.theme.targets.gtk3.enable ''@import url("nyx.css");'';
       gtk.gtk4.extraCss = lib.mkIf cfg.theme.targets.gtk4.enable ''@import url("nyx.css");'';
 
-      services.cliphist = {
-        enable = lib.mkDefault true;
-        allowImages = lib.mkDefault true;
-      };
+      assertions = [{
+        assertion = !config.services.cliphist.enable;
+        message = "programs.nyx records clipboard history itself; disable services.cliphist.";
+      }];
+
+      # Same watchers as services.cliphist, storing through nyx-clipboard so
+      # entries get arrival times.
+      systemd.user.services = lib.genAttrs [ "nyx-clipboard" "nyx-clipboard-images" ] (name: {
+        Unit = {
+          Description = "nyx clipboard history (${name})";
+          PartOf = [ config.wayland.systemd.target ];
+          After = [ config.wayland.systemd.target ];
+        };
+        Service = {
+          ExecStart = lib.concatStringsSep " " ([ "${pkgs.wl-clipboard}/bin/wl-paste" ]
+            ++ lib.optionals (name == "nyx-clipboard-images") [ "--type" "image" ]
+            ++ [ "--watch" (lib.getExe helpers.clipboard) "store" ]);
+          Restart = "on-failure";
+        };
+        Install.WantedBy = [ config.wayland.systemd.target ];
+      });
 
       # Raw ascii output parsed by services/AudioData.qml.
       xdg.configFile."cava/nyx.ini".text = ''

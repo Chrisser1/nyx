@@ -85,15 +85,6 @@ Singleton {
       iconId: "preferences-desktop-display"
     },
     {
-      id: "nyx-mode-clipboard",
-      name: "Clipboard",
-      comment: "Pick an entry from clipboard history",
-      mode: "clipboard",
-      genericName: "Menu",
-      categories: ["Clipboard", "System"],
-      iconId: "edit-paste"
-    },
-    {
       id: "nyx-mode-wallpaper",
       name: "Wallpaper",
       comment: "Set the wallpaper on every monitor, still or animated",

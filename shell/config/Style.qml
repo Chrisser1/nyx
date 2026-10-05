@@ -70,6 +70,13 @@ Singleton {
   }
   readonly property Media media: Media { }
 
+  component Clipboard: QtObject {
+    readonly property int width: 1040 * Config.scale
+    readonly property int height: 640 * Config.scale
+    readonly property int rowHeight: 52 * Config.scale
+  }
+  readonly property Clipboard clipboard: Clipboard { }
+
   component Sysmon: QtObject {
     readonly property int width: 380 * Config.scale
     // Tall: four stacked sections plus the process list, which is the only one

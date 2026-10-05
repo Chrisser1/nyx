@@ -1,5 +1,5 @@
 # Helper binaries the shell calls; sources live in scripts/.
-{ pkgs, lib, gslapper, hyprland, theme, lockCommand, wallpaperDir, defaultWallpaper, screenshotDir }:
+{ pkgs, lib, gslapper, hyprland, theme, lockCommand, wallpaperDir, defaultWallpaper, screenshotDir, clipboardMaxItems }:
 let
   script = import ./script.nix { inherit pkgs; };
 
@@ -29,7 +29,7 @@ in rec {
   audio = script "audio" [ pkgs.wireplumber ] { };
   kbdBacklight = script "kbd-backlight" [ pkgs.brightnessctl hyprland ] { };
   brightness = script "brightness" [ pkgs.brightnessctl hyprland ] { };
-  clipboard = script "clipboard" (with pkgs; [ cliphist wl-clipboard ]) { };
+  clipboard = script "clipboard" (with pkgs; [ cliphist wl-clipboard jq gawk gnugrep coreutils findutils ]) { NYX_CLIPBOARD_MAX_ITEMS = toString clipboardMaxItems; };
   calc = script "calc" (with pkgs; [ libqalculate wl-clipboard ]) { NYX_QALC_CONFIG = "${qalcConfig}"; };
   calendar = script "calendar" (with pkgs; [ calendarBackend evolution gnome-calendar ]) { };
   monitors = script "monitors" (with pkgs; [ jq libnotify wdisplays hyprland ]) { };

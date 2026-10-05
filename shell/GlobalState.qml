@@ -26,12 +26,14 @@ Singleton {
   property string wifiMonitorId: ""
   property bool sysOpen: false
   property string sysMonitorId: ""
+  property bool clipboardOpen: false
+  property string clipboardMonitorId: ""
   property bool mediaOpen: false
   property string mediaMonitorId: ""
   // Window x of the bar widget's centre; the panel hangs under it.
   property real mediaAnchorX: 0
   property bool overlayOpen: root.launcherOpen || root.trayMenuOpen || root.calendarOpen
-    || root.wifiOpen || root.sysOpen || root.mediaOpen
+    || root.wifiOpen || root.sysOpen || root.mediaOpen || root.clipboardOpen
   property QsMenuHandle activeMenu: null
   property bool trayMenuOpen: false
   property int menuDirection: Qt.LeftToRight
@@ -80,6 +82,7 @@ Singleton {
     root.closeWifi()
     root.closeSys()
     root.closeMedia()
+    root.closeClipboard()
     if (root.trayMenuOpen) root.closeTrayMenu()
     launcherMonitorId = id
     if (index >= 0) {
@@ -179,6 +182,26 @@ Singleton {
     }
   }
 
+  // Centred and modal: it takes the keyboard for its filter, so everything
+  // else closes.
+  function openClipboard(id = Config.primaryDisplay) {
+    root.closeAll()
+    root.clipboardMonitorId = id
+    root.clipboardOpen = true
+  }
+
+  function closeClipboard() {
+    root.clipboardOpen = false
+  }
+
+  function toggleClipboard(id = Config.primaryDisplay) {
+    if (root.clipboardOpen && root.clipboardMonitorId === id) {
+      closeClipboard()
+    } else {
+      openClipboard(id)
+    }
+  }
+
   // Escape and click-outside. The launcher is guarded because closing it
   // restarts the reset timer, which would clobber a launcher opened meanwhile.
   function closeAll() {
@@ -186,6 +209,7 @@ Singleton {
     root.closeWifi()
     root.closeSys()
     root.closeMedia()
+    root.closeClipboard()
     if (root.trayMenuOpen) root.closeTrayMenu()
     if (root.launcherOpen) root.closeLauncher()
   }

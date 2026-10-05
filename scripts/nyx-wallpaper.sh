@@ -17,7 +17,7 @@ list() {
 
 outputs() { hyprctl -j monitors | jq -r '.[].name'; }
 
-owns_socket() { tr '\0' ' ' < "/proc/$1/cmdline" 2>/dev/null | grep -qF "nyx-gslapper/$2.sock"; }
+owns_socket() { [[ "$(tr '\0' ' ' < "/proc/$1/cmdline" 2>/dev/null)" == *"nyx-gslapper/$2.sock"* ]]; }
 
 apply() {
   local out=$1 rel=$2 pidfile oldpid opts cand
