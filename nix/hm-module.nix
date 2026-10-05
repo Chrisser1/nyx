@@ -2,15 +2,27 @@
   flake.homeModules.default = { config, pkgs, lib, ... }:
   let
     cfg = config.programs.nyx;
+    inherit (lib) mkOption types;
 
     gslapper = import ./_helpers/gslapper.nix {
       inherit pkgs lib;
       gslapper = inputs.gslapper.packages.${pkgs.stdenv.hostPlatform.system}.gslapper;
     };
 
+    theming = import ./_theme {
+      inherit pkgs lib;
+      hyprland = cfg.hyprlandPackage;
+      inherit (cfg.theme) targets matugenType;
+      defaultTheme = {
+        inherit (cfg.theme) source scheme accent mode;
+        wallpaper = "";
+      };
+    };
+
     helpers = import ./_helpers {
       inherit pkgs lib gslapper;
       inherit (cfg) lockCommand;
+      inherit (theming) theme;
       hyprland = cfg.hyprlandPackage;
       wallpaperDir = cfg.wallpaper.directory;
       defaultWallpaper = cfg.wallpaper.default;
@@ -23,24 +35,52 @@
       hyprland = cfg.hyprlandPackage;
     };
 
-    role = description: lib.mkOption {
-      type = lib.types.str;
+    role = description: mkOption {
+      type = types.str;
       default = "";
       inherit description;
+    };
+
+    target = types.submodule {
+      options = {
+        enable = mkOption {
+          type = types.bool;
+          default = true;
+          description = "Whether to render this target.";
+        };
+        input = mkOption {
+          type = types.path;
+          description = "matugen template.";
+        };
+        output = mkOption {
+          type = types.str;
+          description = "Where the rendered file is written.";
+        };
+        hook = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = "Arguments to nyx-theme-hook after rendering.";
+        };
+      };
+    };
+
+    builtinTargets = import ./_theme/targets.nix {
+      configHome = config.xdg.configHome;
+      stateHome = config.xdg.stateHome;
     };
   in {
     options.programs.nyx = {
       enable = lib.mkEnableOption "the nyx Quickshell desktop shell";
 
-      package = lib.mkOption {
-        type = lib.types.package;
+      package = mkOption {
+        type = types.package;
         readOnly = true;
         default = shell;
         description = "The configured `nyx-shell` launcher.";
       };
 
-      hyprlandPackage = lib.mkOption {
-        type = lib.types.package;
+      hyprlandPackage = mkOption {
+        type = types.package;
         default = pkgs.hyprland;
         description = "Hyprland providing hyprctl; should match the running compositor.";
       };
@@ -51,39 +91,85 @@
         right = role "Output in the right role, if any.";
       };
 
-      terminal = lib.mkOption {
-        type = lib.types.str;
+      terminal = mkOption {
+        type = types.str;
         default = "kitty";
         description = "Terminal for run-in-terminal launcher entries.";
       };
 
-      lockCommand = lib.mkOption {
-        type = lib.types.str;
+      lockCommand = mkOption {
+        type = types.str;
         default = "loginctl lock-session";
         description = "Command run by the power menu's Lock entry.";
       };
 
-      screenshotDirectory = lib.mkOption {
-        type = lib.types.str;
+      screenshotDirectory = mkOption {
+        type = types.str;
         default = "${config.home.homeDirectory}/Pictures";
         description = "Where screenshots are saved.";
       };
 
       wallpaper = {
-        directory = lib.mkOption {
-          type = lib.types.str;
+        directory = mkOption {
+          type = types.str;
           description = "Root of the wallpaper picker; stills and videos.";
         };
-        default = lib.mkOption {
-          type = lib.types.str;
+        default = mkOption {
+          type = types.str;
           default = "";
           description = "Wallpaper, relative to `directory`, for outputs without a saved choice.";
+        };
+      };
+
+      theme = {
+        source = mkOption {
+          type = types.enum [ "scheme" "wallpaper" ];
+          default = "scheme";
+          description = ''
+            Initial theme source. Later choices made with `nyx-theme` persist in
+            $XDG_STATE_HOME/nyx/theme.json and take precedence.
+          '';
+        };
+        scheme = mkOption {
+          type = types.str;
+          default = "gruvbox-dark-medium";
+          description = "base16 scheme name; `nyx-theme schemes` lists them.";
+        };
+        accent = mkOption {
+          type = types.enum (map (n: "base0${n}") [ "8" "9" "A" "B" "C" "D" "E" "F" ]);
+          default = "base0D";
+          description = "base16 slot used as the primary colour of a scheme.";
+        };
+        mode = mkOption {
+          type = types.enum [ "dark" "light" ];
+          default = "dark";
+          description = "Mode for wallpaper-generated themes.";
+        };
+        matugenType = mkOption {
+          type = types.str;
+          default = "scheme-tonal-spot";
+          description = "matugen scheme type for wallpaper-generated themes.";
+        };
+        targets = mkOption {
+          type = types.attrsOf target;
+          default = { };
+          description = "Templates to render. Built-ins can be disabled or overridden; new ones added.";
         };
       };
     };
 
     config = lib.mkIf cfg.enable {
-      home.packages = [ shell gslapper ] ++ helpers.all;
+      programs.nyx.theme.targets = lib.mapAttrs (_: lib.mapAttrs (_: lib.mkDefault)) builtinTargets;
+
+      home.packages = [ shell gslapper theming.theme ] ++ helpers.all;
+
+      home.activation.nyxTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${lib.getExe theming.theme} apply || echo "nyx: theme apply failed" >&2
+      '';
+
+      programs.kitty.extraConfig = lib.mkIf cfg.theme.targets.kitty.enable (lib.mkAfter "include themes/nyx.conf");
+      gtk.gtk3.extraCss = lib.mkIf cfg.theme.targets.gtk3.enable ''@import url("nyx.css");'';
+      gtk.gtk4.extraCss = lib.mkIf cfg.theme.targets.gtk4.enable ''@import url("nyx.css");'';
 
       services.cliphist = {
         enable = lib.mkDefault true;

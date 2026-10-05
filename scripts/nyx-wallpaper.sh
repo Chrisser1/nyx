@@ -58,7 +58,8 @@ case "${1:-}" in
     apply "$2" "$3" && save "$2" "$3" ;;
   set-all)
     [ $# -ge 2 ] || { echo "usage: nyx-wallpaper set-all <relative-path>" >&2; exit 2; }
-    for o in $(outputs); do apply "$o" "$2" && save "$o" "$2"; done ;;
+    for o in $(outputs); do apply "$o" "$2" && save "$o" "$2"; done
+    nyx-theme sync "$ROOT/$2" ;;
   restore)
     for o in $(outputs); do
       rel=$(jq -r --arg o "$o" '.[$o] // ""' "$FILE")

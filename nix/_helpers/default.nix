@@ -1,11 +1,7 @@
 # Helper binaries the shell calls; sources live in scripts/.
-{ pkgs, lib, gslapper, hyprland, lockCommand, wallpaperDir, defaultWallpaper, screenshotDir }:
+{ pkgs, lib, gslapper, hyprland, theme, lockCommand, wallpaperDir, defaultWallpaper, screenshotDir }:
 let
-  script = name: runtimeInputs: runtimeEnv: pkgs.writeShellApplication {
-    name = "nyx-${name}";
-    inherit runtimeInputs runtimeEnv;
-    text = builtins.readFile ../../scripts/nyx-${name}.sh;
-  };
+  script = import ./script.nix { inherit pkgs; };
 
   # Disables qalc's mixed-unit output ("3 mi + 188 yd + ...").
   qalcConfig = pkgs.writeTextDir "qalculate/qalc.cfg" ''
@@ -37,7 +33,7 @@ in rec {
   calc = script "calc" (with pkgs; [ libqalculate wl-clipboard ]) { NYX_QALC_CONFIG = "${qalcConfig}"; };
   calendar = script "calendar" (with pkgs; [ calendarBackend evolution gnome-calendar ]) { };
   monitors = script "monitors" (with pkgs; [ jq libnotify wdisplays hyprland ]) { };
-  wallpaper = script "wallpaper" (with pkgs; [ jq procps findutils gslapper hyprland ]) {
+  wallpaper = script "wallpaper" (with pkgs; [ jq procps findutils gslapper hyprland theme ]) {
     NYX_WALLPAPER_DIR = wallpaperDir;
     NYX_WALLPAPER_DEFAULT = defaultWallpaper;
   };

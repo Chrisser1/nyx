@@ -19,6 +19,7 @@ Singleton {
 
   readonly property string config: xdgDir("XDG_CONFIG_HOME", "~/.config")
   readonly property string cache: xdgDir("XDG_CACHE_HOME", "~/.cache", "nyx")
+  readonly property string state: xdgDir("XDG_STATE_HOME", "~/.local/state", "nyx")
 
   function abs(path: string): string {
     return path.replace("~", home);
