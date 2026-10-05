@@ -53,6 +53,8 @@ check_outputs
 [ "$(jq -r .black "$colors")" = "#282828" ] || fail "surface"
 grep -q '^color1  #fb4934$' "$HOME/.config/kitty/themes/nyx.conf" || fail "kitty red"
 grep -qx 'color_theme = "nyx"' "$HOME/.config/btop/btop.conf" || fail "btop hook"
+grep -qx "color_scheme_path=$HOME/.config/qt6ct/colors/nyx.conf" "$HOME/.config/qt6ct/qt6ct.conf" || fail "qt6ct hook"
+grep -qx "custom_palette=true" "$HOME/.config/qt6ct/qt6ct.conf" || fail "qt6ct custom palette"
 [ "$(nyx-theme current | jq -c '[.source, .scheme, .accent]')" = '["scheme","gruvbox-dark-medium","base0B"]' ] || fail "scheme state"
 before=$(cat "$colors")
 nyx-theme apply

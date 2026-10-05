@@ -3,7 +3,7 @@
 let
   script = import ../_helpers/script.nix { inherit pkgs; };
 
-  hook = script "theme-hook" (with pkgs; [ procps dconf gnused gnugrep hyprland ]) { };
+  hook = script "theme-hook" (with pkgs; [ procps dconf gnused gnugrep hyprland coreutils ]) { };
 
   schemes = "${pkgs.base16-schemes}/share/themes";
 

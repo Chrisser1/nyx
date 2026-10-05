@@ -33,6 +33,7 @@ in {
   qt6ct = {
     input = template "qtct.conf";
     output = "${configHome}/qt6ct/colors/nyx.conf";
+    hook = "qt";
   };
   btop = {
     input = template "btop.theme";
