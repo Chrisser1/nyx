@@ -51,6 +51,28 @@ Singleton {
   property real volume: sink?.audio.volume ?? 0
   property var bars: []
 
+  // Whether anything is making sound: the cava levels, held for a moment so
+  // gaps between tracks do not flicker the bar's equalizer.
+  property bool sounding: false
+  readonly property real soundThreshold: 0.04
+  onBarsChanged: {
+    if (root.bars.some(b => b > root.soundThreshold)) {
+      root.sounding = true
+      soundHold.restart()
+    }
+  }
+
+  Timer {
+    id: soundHold
+    interval: 1500
+    onTriggered: root.sounding = false
+  }
+
+  // cava only runs while an app has a playback stream open or a player is
+  // playing, so an idle desktop costs nothing.
+  readonly property bool playbackActive: (MediaData.player?.isPlaying ?? false)
+    || root.streamNodes.some(s => s.isSink)
+
   PwObjectTracker {
     objects: [root.sink, root.source]
   }
@@ -109,13 +131,13 @@ Singleton {
 
 
   // Use cava to provde data for visualizers, populating root.bars with parsed
-  // integers for each bar if there is audio data. Only the media panel draws
-  // them, so cava only runs while that is open -- which also restarts it on
-  // every open, should it ever have died.
+  // integers for each bar if there is audio data. The media panel and the bar
+  // equalizer draw them, so cava runs while the panel is open or sound plays,
+  // which also restarts it should it ever have died.
   Process {
     id: cava
     command: [Host.cava, "-p", `${Paths.config}/cava/nyx.ini`]
-    running: GlobalState.mediaOpen
+    running: GlobalState.mediaOpen || root.playbackActive
     onRunningChanged: if (!running) root.bars = []
 
     stdout: SplitParser {

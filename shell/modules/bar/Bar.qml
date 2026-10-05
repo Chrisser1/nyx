@@ -85,6 +85,7 @@ Item {
           }
 
           MediaWidget { monitorId: root.monitorId }
+          SoundVisual { Layout.fillHeight: true }
         }
       }
 

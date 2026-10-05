@@ -28,6 +28,8 @@
     dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ] { };
     tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ] { };
     calendarStubbed = stubbed "calendar" [ (stub "nyx-calendar-backend") (stub "evolution") ] { };
+    # Prints one frame every 100 ms, like cava with four raw ascii bars.
+    fakeCava = pkgs.writeShellScript "fake-cava" "while :; do echo \"0;50;100;20\"; sleep 0.1; done";
     bitwardenStubbed = stubbed "bitwarden" (map stub [ "rbw" "wl-copy" "wl-paste" "notify-send" ] ++ [ pkgs.jq pkgs.coreutils pkgs.findutils pkgs.gnugrep ]) { NYX_BITWARDEN_CLEAR = "1"; NYX_BITWARDEN_PINENTRY = "/stub/pinentry"; };
 
     # Runs tests/<name>/shell.qml headless against a copy of shell/; it prints PASS.
@@ -110,6 +112,12 @@
           touch "$XDG_DATA_HOME/rbw/me@example.com.json"
           touch $STUB_DIR/unlocked
           substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-bitwarden"' '"${lib.getExe bitwardenStubbed}"'
+        '';
+      };
+
+      audio-visual = qmlTest "audio" {
+        setup = ''
+          substituteInPlace cfg/config/Host.qml --replace-fail '"cava"' '"${fakeCava}"'
         '';
       };
 
