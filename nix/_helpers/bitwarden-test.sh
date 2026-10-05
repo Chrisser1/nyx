@@ -3,7 +3,7 @@ set -euo pipefail
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
-export STUB_DIR=$PWD/stub
+export STUB_DIR=$PWD/stub XDG_DATA_HOME=$PWD/data
 mkdir -p "$STUB_DIR/secrets"
 cat > "$STUB_DIR/list.json" <<'JSON'
 [
@@ -21,6 +21,8 @@ if nyx-bitwarden copy u1 secret 2>/dev/null; then fail "unknown field accepted";
 
 [ "$(nyx-bitwarden list)" = '{"state":"unconfigured","entries":[]}' ] || fail "unconfigured"
 echo me@example.com > "$STUB_DIR/email"
+[ "$(nyx-bitwarden list)" = '{"state":"login","entries":[]}' ] || fail "login"
+rbw login
 [ "$(nyx-bitwarden list)" = '{"state":"locked","entries":[]}' ] || fail "locked"
 nyx-bitwarden unlock
 l=$(nyx-bitwarden list)

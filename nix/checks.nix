@@ -27,7 +27,7 @@
     stubbed = name: runtimeInputs: env: import ./_helpers/script.nix { inherit pkgs; } name runtimeInputs env;
     dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ] { };
     tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ] { };
-    bitwardenStubbed = stubbed "bitwarden" (map stub [ "rbw" "wl-copy" "wl-paste" "notify-send" ] ++ [ pkgs.jq pkgs.coreutils ]) { NYX_BITWARDEN_CLEAR = "1"; };
+    bitwardenStubbed = stubbed "bitwarden" (map stub [ "rbw" "wl-copy" "wl-paste" "notify-send" ] ++ [ pkgs.jq pkgs.coreutils pkgs.findutils pkgs.gnugrep ]) { NYX_BITWARDEN_CLEAR = "1"; };
 
     # Runs tests/<name>/shell.qml headless against a copy of shell/; it prints PASS.
     qmlTest = name: { inputs ? [ ], setup ? "" }:
@@ -103,6 +103,8 @@
           mkdir -p $STUB_DIR
           cp --no-preserve=mode ${../tests/bitwarden/list.json} $STUB_DIR/list.json
           echo me@example.com > $STUB_DIR/email
+          mkdir -p $HOME/.local/share/rbw
+          touch "$HOME/.local/share/rbw/api.bitwarden.com:me@example.com.json"
           touch $STUB_DIR/unlocked
           substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-bitwarden"' '"${lib.getExe bitwardenStubbed}"'
         '';
@@ -131,7 +133,7 @@
       '';
 
       bitwarden = pkgs.runCommand "nyx-bitwarden-test" {
-        nativeBuildInputs = [ bitwardenStubbed pkgs.jq (stub "wl-copy") ];
+        nativeBuildInputs = [ bitwardenStubbed pkgs.jq (stub "wl-copy") (stub "rbw") ];
       } ''
         bash ${./_helpers/bitwarden-test.sh}
         touch $out

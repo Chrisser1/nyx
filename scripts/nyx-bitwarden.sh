@@ -10,8 +10,12 @@ notify() { notify-send -a nyx -i dialog-password "Bitwarden" "$1" || true; }
 case "${1:-}" in
   list)
     # The state decides what the launcher offers; listing never prompts.
-    if ! rbw config show 2>/dev/null | jq -e '.email' > /dev/null; then
+    # rbw has no logged-in check, but login leaves a vault file named after the email.
+    email=$(rbw config show 2>/dev/null | jq -r '.email // empty') || email=
+    if [ -z "$email" ]; then
       echo '{"state":"unconfigured","entries":[]}'
+    elif ! find "${XDG_DATA_HOME:-$HOME/.local/share}/rbw" -maxdepth 1 -name "*$email*" 2>/dev/null | grep -q .; then
+      echo '{"state":"login","entries":[]}'
     elif ! rbw unlocked > /dev/null 2>&1; then
       echo '{"state":"locked","entries":[]}'
     else

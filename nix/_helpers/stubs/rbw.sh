@@ -1,7 +1,9 @@
-# Fake rbw backed by $STUB_DIR: `email` marks it configured, `unlocked` unlocks,
+# Fake rbw backed by $STUB_DIR: `email` marks it configured, login writes the
+# vault file under $XDG_DATA_HOME, `unlocked` unlocks,
 # list.json is the vault and secrets/<id>.<field> the secrets.
 case "$1" in
   config) [ -f "$STUB_DIR/email" ] || exit 1; echo "{\"email\":\"$(cat "$STUB_DIR/email")\"}" ;;
+  login) mkdir -p "$XDG_DATA_HOME/rbw" && touch "$XDG_DATA_HOME/rbw/api.bitwarden.com:$(cat "$STUB_DIR/email").json" ;;
   unlocked) [ -f "$STUB_DIR/unlocked" ] ;;
   unlock) touch "$STUB_DIR/unlocked" ;;
   lock) rm -f "$STUB_DIR/unlocked" ;;

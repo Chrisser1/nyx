@@ -47,7 +47,7 @@ in rec {
   };
   docker = script "docker" [ pkgs.docker-client pkgs.jq ] { };
   tailnet = script "tailnet" [ pkgs.tailscale pkgs.jq ] { };
-  bitwarden = script "bitwarden" (with pkgs; [ rbw jq wl-clipboard libnotify coreutils ]) {
+  bitwarden = script "bitwarden" (with pkgs; [ rbw jq wl-clipboard libnotify coreutils findutils gnugrep ]) {
     NYX_BITWARDEN_CLEAR = toString bitwardenClear;
   };
   wallpaper = script "wallpaper" (with pkgs; [ jq procps findutils coreutils ffmpeg-headless gslapper hyprland theme ]) {
