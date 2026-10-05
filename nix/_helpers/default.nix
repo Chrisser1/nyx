@@ -1,5 +1,5 @@
 # Helper binaries the shell calls; sources live in scripts/.
-{ pkgs, lib, gslapper, hyprland, theme, lockCommand, wallpaperDir, defaultWallpaper, screenshotDir, clipboardMaxItems, emojiType }:
+{ pkgs, lib, gslapper, hyprland, theme, lockCommand, wallpaperDir, defaultWallpaper, screenshotDir, clipboardMaxItems, emojiType, bitwardenClear }:
 let
   script = import ./script.nix { inherit pkgs; };
 
@@ -47,10 +47,13 @@ in rec {
   };
   docker = script "docker" [ pkgs.docker-client pkgs.jq ] { };
   tailnet = script "tailnet" [ pkgs.tailscale pkgs.jq ] { };
+  bitwarden = script "bitwarden" (with pkgs; [ rbw jq wl-clipboard libnotify coreutils ]) {
+    NYX_BITWARDEN_CLEAR = toString bitwardenClear;
+  };
   wallpaper = script "wallpaper" (with pkgs; [ jq procps findutils coreutils ffmpeg-headless gslapper hyprland theme ]) {
     NYX_WALLPAPER_DIR = wallpaperDir;
     NYX_WALLPAPER_DEFAULT = defaultWallpaper;
   };
 
-  all = [ power screenshot colorpicker audio kbdBacklight brightness clipboard calc calendar monitors wallpaper emoji docker tailnet ];
+  all = [ power screenshot colorpicker audio kbdBacklight brightness clipboard calc calendar monitors wallpaper emoji docker tailnet bitwarden ];
 }

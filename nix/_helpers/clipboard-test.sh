@@ -17,8 +17,10 @@ expect_status 1 nyx-clipboard text pdeadbeefdeadbeef
 printf 'hello\tworld' | nyx-clipboard store
 magick -size 32x16 xc:'#b8bb26' image.png
 nyx-clipboard store < image.png
+printf 'hunter2' | CLIPBOARD_STATE=sensitive nyx-clipboard store
+CLIPBOARD_STATE=nil nyx-clipboard store < /dev/null
 
-[ "$(list | jq length)" = 2 ] || fail "two entries"
+[ "$(list | jq length)" = 2 ] || fail "two entries; sensitive and empty states skipped"
 [ "$(list | jq -c '.[0] | [.kind, .format, .width, .height, .pinned]')" = '["image","png",32,16,false]' ] || fail "image entry: $(list | jq -c '.[0]')"
 [ "$(list | jq -r '.[1] | .kind + ":" + .preview')" = "text:hello world" ] || fail "text entry"
 now=$(date +%s)

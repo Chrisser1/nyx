@@ -27,6 +27,7 @@ let
       readonly property string emoji: "${exe helpers.emoji}"
       readonly property string docker: "${exe helpers.docker}"
       readonly property string tailnet: "${exe helpers.tailnet}"
+      readonly property string bitwarden: "${exe helpers.bitwarden}"
       readonly property string brightnessctl: "${exe pkgs.brightnessctl}"
       readonly property string kbdBacklight: "${exe helpers.kbdBacklight}"
       readonly property string sysmon: "${exe pkgs.btop}"

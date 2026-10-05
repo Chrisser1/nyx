@@ -19,13 +19,15 @@
       screenshotDir = "/tmp";
       clipboardMaxItems = 500;
       emojiType = false;
+      bitwardenClear = 30;
     };
 
     # A helper built against fakes in _helpers/stubs instead of the real CLIs.
     stub = name: pkgs.writeShellScriptBin name (builtins.readFile ./_helpers/stubs/${name}.sh);
-    stubbed = name: runtimeInputs: import ./_helpers/script.nix { inherit pkgs; } name runtimeInputs { };
-    dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ];
-    tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ];
+    stubbed = name: runtimeInputs: env: import ./_helpers/script.nix { inherit pkgs; } name runtimeInputs env;
+    dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ] { };
+    tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ] { };
+    bitwardenStubbed = stubbed "bitwarden" (map stub [ "rbw" "wl-copy" "wl-paste" "notify-send" ] ++ [ pkgs.jq pkgs.coreutils ]) { NYX_BITWARDEN_CLEAR = "1"; };
 
     # Runs tests/<name>/shell.qml headless against a copy of shell/; it prints PASS.
     qmlTest = name: { inputs ? [ ], setup ? "" }:
@@ -95,6 +97,17 @@
         '';
       };
 
+      bitwarden-launcher = qmlTest "bitwarden" {
+        setup = ''
+          export STUB_DIR=$PWD/stub
+          mkdir -p $STUB_DIR
+          cp --no-preserve=mode ${../tests/bitwarden/list.json} $STUB_DIR/list.json
+          echo me@example.com > $STUB_DIR/email
+          touch $STUB_DIR/unlocked
+          substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-bitwarden"' '"${lib.getExe bitwardenStubbed}"'
+        '';
+      };
+
       clipboard = pkgs.runCommand "nyx-clipboard-test" {
         nativeBuildInputs = [ helpers.clipboard pkgs.imagemagick pkgs.jq ];
       } ''
@@ -114,6 +127,13 @@
         STATUS_JSON = "${../tests/tailnet/status.json}";
       } ''
         bash ${./_helpers/tailnet-test.sh}
+        touch $out
+      '';
+
+      bitwarden = pkgs.runCommand "nyx-bitwarden-test" {
+        nativeBuildInputs = [ bitwardenStubbed pkgs.jq (stub "wl-copy") ];
+      } ''
+        bash ${./_helpers/bitwarden-test.sh}
         touch $out
       '';
 

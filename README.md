@@ -88,3 +88,12 @@ The bar shows the running count while anything runs.
 to an online peer, Ctrl+C copies its IPv4, Ctrl+E toggles it as exit node;
 clicking an address copies it. Going up/down and switching exit nodes needs the
 user to be operator: `services.tailscale.extraSetFlags = [ "--operator=<user>" ]`.
+
+## Bitwarden
+
+`nyx:toggleBitwarden` opens the launcher on the vault, through
+[rbw](https://github.com/doy/rbw) (configure it with `programs.rbw`). Enter
+copies the password, or the note for non-logins; the drawer copies the
+username, TOTP or notes. Copies are marked sensitive, so the clipboard history
+skips them, and are cleared after `programs.nyx.bitwarden.clearAfter` seconds.
+A locked vault shows an unlock card, which prompts through rbw's pinentry.

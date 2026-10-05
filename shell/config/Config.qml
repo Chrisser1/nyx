@@ -103,6 +103,15 @@ Singleton {
       iconId: "preferences-desktop-theme"
     },
     {
+      id: "nyx-mode-bitwarden",
+      name: "Bitwarden",
+      comment: "Copy passwords, usernames and TOTP codes from the vault",
+      mode: "bitwarden",
+      genericName: "Menu",
+      categories: ["Security", "Utility"],
+      iconId: "dialog-password"
+    },
+    {
       id: "nyx-mode-emoji",
       name: "Emoji",
       comment: "Search emoji and copy one to the clipboard",

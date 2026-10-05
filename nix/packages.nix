@@ -25,6 +25,7 @@
       screenshotDir = "/tmp";
       clipboardMaxItems = 500;
       emojiType = false;
+      bitwardenClear = 30;
     };
   in {
     _module.args.nyx = { inherit theming helpers; };

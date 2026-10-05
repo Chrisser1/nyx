@@ -120,6 +120,7 @@ Item {
       else if (GlobalState.launcherMode === "theme") LauncherData.refreshThemes();
       else if (GlobalState.launcherMode === "display") LauncherData.refreshMonitors();
       else if (GlobalState.launcherMode === "emoji") LauncherData.refreshEmoji();
+      else if (GlobalState.launcherMode === "bitwarden") LauncherData.refreshBitwarden();
       root.evaluateQuery();
     }
     function onSearchQueryChanged() {
@@ -180,6 +181,17 @@ Item {
     onPressed: {
       if (Hyprland.focusedMonitor?.name === root.monitorId) {
         GlobalState.toggleLauncher({ id: Hyprland.focusedMonitor?.name, mode: "emoji" })
+      }
+    }
+  }
+
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "toggleBitwarden"
+    description: "Opens the launcher on the Bitwarden vault"
+    onPressed: {
+      if (Hyprland.focusedMonitor?.name === root.monitorId) {
+        GlobalState.toggleLauncher({ id: Hyprland.focusedMonitor?.name, mode: "bitwarden" })
       }
     }
   }
@@ -292,6 +304,9 @@ Item {
         } else if (s === "emoji") {
           const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/emoji`, "")
           return Fuzzy.query(q, LauncherData.emojiData)
+        } else if (s === "bitwarden") {
+          const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/bitwarden`, "")
+          return Fuzzy.query(q, LauncherData.bitwardenData)
         } else if (s === "calc") {
           return LauncherData.calcData
         } else {
@@ -316,12 +331,16 @@ Item {
         } else if (s === "theme") {
           // Stays open so themes can be compared.
           LauncherData.applyTheme(entry)
+        } else if (s === "bitwarden" && entry.unlockVault) {
+          GlobalState.closeLauncher()
+          LauncherData.unlockVault(root.monitorId)
         } else if (s === "power"
           || s === "display"
           || s === "audio"
           || s === "utils"
           || s === "wallpaper"
           || s === "emoji"
+          || s === "bitwarden"
           || s === "calc"
           || s === "apps"
           || s === "") {

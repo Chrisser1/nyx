@@ -29,6 +29,7 @@
       screenshotDir = cfg.screenshotDirectory;
       clipboardMaxItems = cfg.clipboard.maxItems;
       emojiType = cfg.emoji.type;
+      bitwardenClear = cfg.bitwarden.clearAfter;
     };
 
     shell = import ./_package {
@@ -148,6 +149,12 @@
         type = types.bool;
         default = false;
         description = "Also type the picked emoji into the focused window, besides copying it.";
+      };
+
+      bitwarden.clearAfter = mkOption {
+        type = types.ints.unsigned;
+        default = 30;
+        description = "Seconds before a copied secret is cleared from the clipboard; 0 keeps it.";
       };
 
       theme = {
