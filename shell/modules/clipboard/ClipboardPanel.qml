@@ -20,6 +20,8 @@ Item {
   readonly property bool active: GlobalState.clipboardOpen
     && GlobalState.clipboardMonitorId === root.monitorId
   property string query: ""
+  // Shared clock for "time ago", so every label agrees and stays current.
+  property real now: Date.now() / 1000
   readonly property var shown: ClipboardData.filter(root.query)
   readonly property var current: list.currentIndex >= 0 && list.currentIndex < root.shown.length
     ? root.shown[list.currentIndex] : null
@@ -30,6 +32,7 @@ Item {
 
   onActiveChanged: {
     if (!root.active) return;
+    root.now = Date.now() / 1000;
     filter.text = "";
     list.currentIndex = 0;
     ClipboardData.refresh();
@@ -65,7 +68,7 @@ Item {
 
   function ago(time) {
     if (!time) return "";
-    const seconds = Math.floor(Date.now() / 1000) - time;
+    const seconds = Math.floor(root.now - time);
     if (seconds < 60) return "just now";
     if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)} h ago`;
@@ -106,6 +109,13 @@ Item {
 
   function togglePin() {
     if (root.current) ClipboardData.togglePin(root.current);
+  }
+
+  Timer {
+    interval: 30000
+    repeat: true
+    running: root.active
+    onTriggered: root.now = Date.now() / 1000
   }
 
   BorderRect {

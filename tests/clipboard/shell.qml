@@ -29,6 +29,9 @@ ShellRoot {
       act: () => {
         if (panel.current.kind !== "image") root.fail("newest entry selected");
         if (!panel.meta(panel.current, true).includes("1362×766")) root.fail("image meta");
+        panel.now = panel.current.time + 150;
+        if (!panel.meta(panel.current, false).startsWith("2 min ago")) root.fail("time ago follows now");
+        panel.now = Date.now() / 1000;
         root.shot("image");
       } },
     { what: "image screenshot", settle: 5, ready: () => true, act: () => panel.query = "notes" },
