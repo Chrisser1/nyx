@@ -9,7 +9,8 @@ import QtQuick
 Item {
   id: root
 
-  opacity: AudioData.sounding ? 1 : 0
+  // MediaWidget draws the levels itself while a player is there.
+  opacity: AudioData.sounding && !MediaData.active ? 1 : 0
   visible: opacity > 0
   Behavior on opacity { NumberAnimation { duration: Style.durations.small; easing.type: Easing.OutCubic } }
 

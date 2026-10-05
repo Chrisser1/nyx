@@ -5,6 +5,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs
+import qs.components
 import qs.services
 import qs.config
 
@@ -58,6 +59,18 @@ Rectangle {
     anchors.verticalCenter: parent.verticalCenter
     spacing: Style.spacing.p1
 
+    // The track's cover art, when the player has one.
+    Image {
+      Layout.alignment: Qt.AlignVCenter
+      Layout.preferredWidth: root.height * 0.7
+      Layout.preferredHeight: root.height * 0.7
+      visible: status === Image.Ready
+      source: root.player?.trackArtUrl ?? ""
+      sourceSize: Qt.size(64, 64)
+      fillMode: Image.PreserveAspectCrop
+      asynchronous: true
+    }
+
     Text {
       text: root.player?.isPlaying ? "" : ""
       font.family: Style.font.symbols
@@ -75,12 +88,26 @@ Rectangle {
     // Clipped rather than elided so a long title can scroll on hover.
     Item {
       Layout.alignment: Qt.AlignVCenter
-      implicitHeight: title.implicitHeight
+      implicitHeight: root.height * 0.8
       implicitWidth: Math.min(title.implicitWidth, 220)
       clip: true
 
+      // The levels, behind the title.
+      Equalizer {
+        id: levels
+        anchors.fill: parent
+        z: -1
+        opacity: AudioData.sounding ? 0.3 : 0
+        bars: AudioData.bars
+        count: 24
+        gap: 2
+        columnWidth: (width - (count - 1) * gap) / count
+        Behavior on opacity { NumberAnimation { duration: Style.durations.small } }
+      }
+
       Text {
         id: title
+        anchors.verticalCenter: parent.verticalCenter
         text: MediaData.label
         font.family: Style.font.main
         font.pointSize: Style.font.small
