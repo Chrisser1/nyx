@@ -77,6 +77,26 @@ Singleton {
     objects: [root.sink, root.source]
   }
 
+  // Devices and per-app streams for modules/audio/AudioPanel.qml. A node's
+  // `audio` stays null until it is tracked, so everything audio-typed is
+  // tracked below. Our own plumbing (rnnoise, cava) is left out.
+  function isAudio(n) { return (n.type & PwNodeType.Audio) !== 0 }
+  function isPlumbing(n) { return /^(capture|effect_|cava)/.test(n.name ?? "") }
+  property var sinks: pwNodes.filter(n => root.isAudio(n) && !n.isStream && n.isSink && !root.isPlumbing(n))
+  property var sources: pwNodes.filter(n => root.isAudio(n) && !n.isStream && !n.isSink && !root.isPlumbing(n))
+  property var appStreams: pwNodes.filter(n => root.isAudio(n) && n.isStream && n.isSink && !root.isPlumbing(n))
+
+  PwObjectTracker {
+    objects: [...root.sinks, ...root.sources, ...root.appStreams]
+  }
+
+  function deviceLabel(n) { return n?.nickname || n?.description || n?.name || "" }
+  function appLabel(n) {
+    return n?.properties?.["application.name"] || n?.properties?.["media.name"] || root.deviceLabel(n)
+  }
+  function setDefaultSink(n) { Pipewire.preferredDefaultAudioSink = n }
+  function setDefaultSource(n) { Pipewire.preferredDefaultAudioSource = n }
+
   // https://github.com/end-4/dots-hyprland/blob/446504ad427297dcbe5ee4a3d5bda1c458207cd9/dots/.config/quickshell/ii/services/Audio.qml#L60
   function incrementVolume() {
     if (!sink?.audio?.volume) { return }

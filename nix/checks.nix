@@ -115,6 +115,8 @@
         '';
       };
 
+
+      audio-panel = qmlTest "audiopanel" { };
       audio-visual = qmlTest "audio" {
         setup = ''
           substituteInPlace cfg/config/Host.qml --replace-fail '"cava"' '"${fakeCava}"'

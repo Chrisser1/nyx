@@ -19,6 +19,7 @@ import qs.modules.launcher
 import qs.modules.calendar
 import qs.modules.clipboard
 import qs.modules.docker
+import qs.modules.audio
 import qs.modules.network
 import qs.modules.media
 import qs.modules.system
@@ -258,6 +259,10 @@ ShellRoot {
         }
 
         CalendarPanel {
+          monitorId: scope.monitorId
+        }
+
+        AudioPanel {
           monitorId: scope.monitorId
         }
 

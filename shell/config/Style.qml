@@ -60,6 +60,14 @@ Singleton {
   }
   readonly property Wifi wifi: Wifi { }
 
+  component Audio: QtObject {
+    readonly property int width: 340 * Config.scale
+    // Output, input and apps; the body scrolls past this.
+    readonly property int height: 460 * Config.scale
+    readonly property int rowHeight: 32 * Config.scale
+  }
+  readonly property Audio audio: Audio { }
+
   component Media: QtObject {
     readonly property int width: 320 * Config.scale
     // Square art on top, then track info, progress and the transport row.

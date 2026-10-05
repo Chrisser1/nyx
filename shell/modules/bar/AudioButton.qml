@@ -54,17 +54,7 @@ ExpandingButton {
     }
   }
 
-  property var openAudioMenu: () => {
-    const i = Config.outputs.findIndex(o => o.sink === AudioData.sink.name)
-    GlobalState.openLauncher({
-      id: root.monitorId,
-      mode: "audio",
-      direction: Qt.RightToLeft,
-      index: i > -1 ? i : 0
-    })
-  }
-
-  onRightClick: openAudioMenu
+  onRightClick: () => GlobalState.toggleAudio(root.monitorId)
 
   wheelHandler: (event) => {
     root.peek()
@@ -93,7 +83,7 @@ ExpandingButton {
       id: srcMouse
       hoverEnabled: true
       anchors.fill: parent
-      onClicked: root.openAudioMenu()
+      onClicked: GlobalState.toggleAudio(root.monitorId)
     }
 
     transitions: [

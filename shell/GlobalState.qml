@@ -22,6 +22,8 @@ Singleton {
   property string launcherMode: Config.defaultMode
   property bool calendarOpen: false
   property string calendarMonitorId: ""
+  property bool audioOpen: false
+  property string audioMonitorId: ""
   property bool wifiOpen: false
   property string wifiMonitorId: ""
   property bool sysOpen: false
@@ -39,7 +41,7 @@ Singleton {
   // Window x of the bar widget's centre; the panel hangs under it.
   property real mediaAnchorX: 0
   property bool overlayOpen: root.launcherOpen || root.trayMenuOpen || root.calendarOpen
-    || root.wifiOpen || root.sysOpen || root.mediaOpen || root.clipboardOpen
+    || root.audioOpen || root.wifiOpen || root.sysOpen || root.mediaOpen || root.clipboardOpen
     || root.switcherOpen || root.dockerOpen || root.tailnetOpen
   property QsMenuHandle activeMenu: null
   property bool trayMenuOpen: false
@@ -87,6 +89,7 @@ Singleton {
     // nothing else stays open under it.
     root.closeCalendar()
     root.closeWifi()
+    root.closeAudio()
     root.closeSys()
     root.closeMedia()
     root.closeClipboard()
@@ -109,6 +112,7 @@ Singleton {
   function openCalendar(id = Config.primaryDisplay) {
     root.closeSys()
     root.closeWifi()
+    root.closeAudio()
     root.calendarMonitorId = id
     root.calendarOpen = true
   }
@@ -125,11 +129,30 @@ Singleton {
     }
   }
 
+  // The audio dropdown shares the top-right corner with the wifi one.
+  function openAudio(id = Config.primaryDisplay) {
+    root.closeCalendar()
+    root.closeWifi()
+    root.closeSys()
+    root.audioMonitorId = id
+    root.audioOpen = true
+  }
+
+  function closeAudio() {
+    root.audioOpen = false
+  }
+
+  function toggleAudio(id = Config.primaryDisplay) {
+    if (root.audioOpen && root.audioMonitorId === id) closeAudio()
+    else openAudio(id)
+  }
+
   // The wifi dropdown behaves like the calendar -- floats over the windows,
   // no exclusion zone -- except that it does want the keyboard once a password
   // field is open. shell.qml handles that with OnDemand focus.
   function openWifi(id = Config.primaryDisplay) {
     root.closeSys()
+    root.closeAudio()
     root.closeCalendar()
     root.wifiMonitorId = id
     root.wifiOpen = true
@@ -152,6 +175,7 @@ Singleton {
   // the calendar it never takes the keyboard -- nothing in it is typed into.
   function openSys(id = Config.primaryDisplay) {
     root.closeWifi()
+    root.closeAudio()
     root.closeCalendar()
     root.sysMonitorId = id
     root.sysOpen = true
@@ -263,6 +287,7 @@ Singleton {
   function overlayOn(id) {
     return root.modalOn(id)
       || (root.calendarOpen && root.calendarMonitorId === id)
+      || (root.audioOpen && root.audioMonitorId === id)
       || (root.wifiOpen && root.wifiMonitorId === id)
       || (root.sysOpen && root.sysMonitorId === id)
       || (root.mediaOpen && root.mediaMonitorId === id)
@@ -273,6 +298,7 @@ Singleton {
   function closeAll() {
     root.closeCalendar()
     root.closeWifi()
+    root.closeAudio()
     root.closeSys()
     root.closeMedia()
     root.closeClipboard()
