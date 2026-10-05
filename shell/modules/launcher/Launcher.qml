@@ -312,7 +312,7 @@ Item {
           return LauncherData.searchEmoji(q)
         } else if (s === "bitwarden") {
           const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/bitwarden`, "")
-          return Fuzzy.query(q, LauncherData.bitwardenData)
+          return LauncherData.vaultNeedsSetup ? LauncherData.setupEntries(q) : Fuzzy.query(q, LauncherData.bitwardenData)
         } else if (s === "calc") {
           return LauncherData.calcData
         } else {
@@ -337,6 +337,14 @@ Item {
         } else if (s === "theme") {
           // Stays open so themes can be compared.
           LauncherData.applyTheme(entry)
+        } else if (s === "bitwarden" && entry.loginEmail !== undefined) {
+          if (entry.loginEmail === "") return
+          GlobalState.closeLauncher()
+          LauncherData.loginVault(root.monitorId, entry.loginEmail)
+        } else if (s === "bitwarden" && entry.setRegion !== undefined) {
+          LauncherData.vaultRegion = entry.setRegion
+          // A pasted server URL is not an email, so clear it for the next step.
+          if (entry.setRegion.startsWith("http")) GlobalState.searchQuery = ""
         } else if (s === "bitwarden" && entry.unlockVault) {
           GlobalState.closeLauncher()
           LauncherData.unlockVault(root.monitorId)

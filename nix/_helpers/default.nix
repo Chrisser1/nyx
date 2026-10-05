@@ -3,6 +3,19 @@
 let
   script = import ./script.nix { inherit pkgs; };
 
+  # pinentry-qt is Qt6, so it needs the qt6ct platform theme to pick up the
+  # colours nyx-theme writes.
+  pinentry = pkgs.symlinkJoin {
+    name = "nyx-pinentry";
+    paths = [ pkgs.pinentry-qt ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/pinentry \
+        --set QT_QPA_PLATFORMTHEME qt6ct \
+        --prefix QT_PLUGIN_PATH : ${pkgs.kdePackages.qt6ct}/lib/qt-6/plugins
+    '';
+  };
+
   # Disables qalc's mixed-unit output ("3 mi + 188 yd + ...").
   qalcConfig = pkgs.writeTextDir "qalculate/qalc.cfg" ''
     mixed_units_conversion=0
@@ -49,6 +62,7 @@ in rec {
   tailnet = script "tailnet" [ pkgs.tailscale pkgs.jq ] { };
   bitwarden = script "bitwarden" (with pkgs; [ rbw jq wl-clipboard libnotify coreutils findutils gnugrep ]) {
     NYX_BITWARDEN_CLEAR = toString bitwardenClear;
+    NYX_BITWARDEN_PINENTRY = "${pinentry}/bin/pinentry";
   };
   wallpaper = script "wallpaper" (with pkgs; [ jq procps findutils coreutils ffmpeg-headless gslapper hyprland theme ]) {
     NYX_WALLPAPER_DIR = wallpaperDir;

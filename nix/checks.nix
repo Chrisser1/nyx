@@ -27,7 +27,7 @@
     stubbed = name: runtimeInputs: env: import ./_helpers/script.nix { inherit pkgs; } name runtimeInputs env;
     dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ] { };
     tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ] { };
-    bitwardenStubbed = stubbed "bitwarden" (map stub [ "rbw" "wl-copy" "wl-paste" "notify-send" ] ++ [ pkgs.jq pkgs.coreutils pkgs.findutils pkgs.gnugrep ]) { NYX_BITWARDEN_CLEAR = "1"; };
+    bitwardenStubbed = stubbed "bitwarden" (map stub [ "rbw" "wl-copy" "wl-paste" "notify-send" ] ++ [ pkgs.jq pkgs.coreutils pkgs.findutils pkgs.gnugrep ]) { NYX_BITWARDEN_CLEAR = "1"; NYX_BITWARDEN_PINENTRY = "/stub/pinentry"; };
 
     # Runs tests/<name>/shell.qml headless against a copy of shell/; it prints PASS.
     qmlTest = name: { inputs ? [ ], setup ? "" }:
@@ -102,9 +102,11 @@
           export STUB_DIR=$PWD/stub
           mkdir -p $STUB_DIR
           cp --no-preserve=mode ${../tests/bitwarden/list.json} $STUB_DIR/list.json
-          echo me@example.com > $STUB_DIR/email
+          mkdir -p $STUB_DIR/cfg
+          echo me@example.com > $STUB_DIR/cfg/email
+          export XDG_DATA_HOME=$HOME/.local/share
           mkdir -p $HOME/.local/share/rbw
-          touch "$HOME/.local/share/rbw/api.bitwarden.com:me@example.com.json"
+          touch "$XDG_DATA_HOME/rbw/me@example.com.json"
           touch $STUB_DIR/unlocked
           substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-bitwarden"' '"${lib.getExe bitwardenStubbed}"'
         '';

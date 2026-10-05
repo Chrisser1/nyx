@@ -45,6 +45,28 @@ ShellRoot {
       } },
     { what: "reopened after unlock", ready: () => GlobalState.launcherOpen && GlobalState.launcherMode === "bitwarden",
       act: () => {
+        Quickshell.execDetached(["rm", "-f", `${Quickshell.env("STUB_DIR")}/cfg/email`]);
+      } },
+    { what: "email removed", settle: 3, ready: () => true,
+      act: () => LauncherData.refreshBitwarden() },
+    { what: "setup form", settle: 3, ready: () => LauncherData.vaultState === "unconfigured",
+      act: () => {
+        if (!LauncherData.vaultNeedsSetup) root.fail("setup state");
+        if (LauncherData.setupEntries("me@example.com")[0].loginEmail !== "me@example.com") root.fail("login card takes the email");
+        if (LauncherData.setupEntries("nope")[0].loginEmail !== "") root.fail("login card rejects a non-email");
+        if (LauncherData.setupEntries("").map(e => e.setRegion).filter(Boolean).join() !== "com,eu") root.fail("region cards");
+        const url = LauncherData.setupEntries("https://vault.example.org");
+        if (url[url.length - 1].setRegion !== "https://vault.example.org" || url[0].loginEmail !== "") root.fail("server url card");
+        if (!LauncherData.setupEntries("")[1].name.startsWith("● ")) root.fail("default region marked");
+        LauncherData.vaultRegion = "eu";
+        if (!LauncherData.setupEntries("")[2].name.startsWith("● ")) root.fail("chosen region marked");
+        GlobalState.closeLauncher();
+        LauncherData.loginVault("TEST", "me@example.com");
+      } },
+    { what: "reopened after login", ready: () => GlobalState.launcherOpen && GlobalState.launcherMode === "bitwarden",
+      act: () => LauncherData.refreshBitwarden() },
+    { what: "logged in", ready: () => LauncherData.vaultState === "unlocked",
+      act: () => {
         console.log("PASS");
         Qt.exit(0);
       } }

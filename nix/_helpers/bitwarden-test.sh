@@ -20,9 +20,29 @@ if nyx-bitwarden copy u1 2>/dev/null; then fail "copy without field accepted"; f
 if nyx-bitwarden copy u1 secret 2>/dev/null; then fail "unknown field accepted"; fi
 
 [ "$(nyx-bitwarden list)" = '{"state":"unconfigured","entries":[]}' ] || fail "unconfigured"
-echo me@example.com > "$STUB_DIR/email"
-[ "$(nyx-bitwarden list)" = '{"state":"login","entries":[]}' ] || fail "login"
-rbw login
+if nyx-bitwarden setup me@example.com mars 2>/dev/null; then fail "unknown region accepted"; fi
+if nyx-bitwarden setup me@example.com 2>/dev/null; then fail "setup without region accepted"; fi
+
+# A failed login still records the email, so the launcher offers login again.
+touch "$STUB_DIR/login-fails"
+if nyx-bitwarden setup me@example.com eu; then fail "failed login succeeded"; fi
+grep -q "Login failed: Username or password is incorrect" "$STUB_DIR/notifications" || fail "login failure notified"
+[ "$(nyx-bitwarden list)" = '{"state":"login","entries":[]}' ] || fail "login after failed setup"
+rm "$STUB_DIR/login-fails"
+
+nyx-bitwarden setup me@example.com eu
+[ "$(cat "$STUB_DIR/cfg/base_url")" = https://api.bitwarden.eu ] || fail "eu base url"
+[ "$(cat "$STUB_DIR/cfg/identity_url")" = https://identity.bitwarden.eu ] || fail "eu identity url"
+[ "$(cat "$STUB_DIR/cfg/pinentry")" = /stub/pinentry ] || fail "pinentry configured"
+[ "$(nyx-bitwarden list | jq -r .state)" = unlocked ] || fail "setup unlocks"
+grep -q sync "$STUB_DIR/calls" || fail "setup syncs"
+nyx-bitwarden setup me@example.com https://vault.example.org
+[ "$(cat "$STUB_DIR/cfg/base_url")" = https://vault.example.org ] || fail "self-hosted base url"
+[ ! -e "$STUB_DIR/cfg/identity_url" ] || fail "self-hosted keeps identity url"
+nyx-bitwarden setup me@example.com com
+[ ! -e "$STUB_DIR/cfg/base_url" ] || fail "com clears base url"
+
+nyx-bitwarden lock
 [ "$(nyx-bitwarden list)" = '{"state":"locked","entries":[]}' ] || fail "locked"
 nyx-bitwarden unlock
 l=$(nyx-bitwarden list)

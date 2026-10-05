@@ -422,18 +422,8 @@ Singleton {
             id: "nyx-bw-unlock", name: "Unlock vault", genericName: "Bitwarden", search: "unlock vault",
             comment: "Asks for the master password", iconId: "dialog-password", unlockVault: true
           }];
-        } else if (data.state === "login") {
-          root.vaultEntries = [{
-            id: "nyx-bw-login", name: "Log in to Bitwarden", genericName: "Bitwarden", search: "log in login bitwarden",
-            comment: "Opens a terminal for rbw login",
-            iconId: "dialog-password", runInTerminal: true, command: ["rbw", "login"]
-          }];
         } else {
-          root.vaultEntries = [{
-            id: "nyx-bw-setup", name: "Set up rbw", genericName: "Bitwarden", search: "set up rbw email",
-            comment: "Set programs.rbw.settings.email, then rebuild",
-            iconId: "dialog-password", runInTerminal: true, command: ["rbw", "config", "show"]
-          }];
+          root.vaultEntries = [];
         }
       }
     }
@@ -452,6 +442,66 @@ Singleton {
     command: [Host.bitwarden, "unlock"]
     onExited: code => {
       if (code === 0) GlobalState.openLauncher({ id: unlockProc.monitorId, mode: "bitwarden" });
+    }
+  }
+
+  // Before login the search box is the form: type the email, pick a region
+  // (or paste a server URL and press Enter on its card), then Enter on the
+  // login card. The password and 2FA code are asked for in pinentry.
+  readonly property bool vaultNeedsSetup: vaultState === "unconfigured" || vaultState === "login"
+  property string vaultRegion: "com"
+  readonly property var vaultRegions: [
+    { id: "com", name: "Bitwarden.com", comment: "United States" },
+    { id: "eu", name: "Bitwarden.eu", comment: "European Union" }
+  ]
+
+  function setupEntries(query) {
+    const q = query.trim();
+    const isUrl = /^https?:\/\//.test(q);
+    const valid = !isUrl && /^[^@\s]+@[^@\s]+$/.test(q);
+    const region = root.vaultRegions.find(r => r.id === root.vaultRegion)?.name ?? root.vaultRegion;
+    const entries = [{
+      id: "nyx-bw-login",
+      name: valid ? `Log in as ${q}` : "Type your email above",
+      genericName: region,
+      comment: valid ? "Asks for your password in a dialog" : "Then press Enter here",
+      iconId: "dialog-password",
+      loginEmail: valid ? q : ""
+    }];
+    for (const r of root.vaultRegions) {
+      entries.push({
+        id: `nyx-bw-region-${r.id}`,
+        name: `${root.vaultRegion === r.id ? "● " : "○ "}${r.name}`,
+        genericName: "Region",
+        comment: r.comment,
+        iconId: "network-server",
+        setRegion: r.id
+      });
+    }
+    if (isUrl) {
+      entries.push({
+        id: "nyx-bw-region-custom",
+        name: `${root.vaultRegion === q ? "● " : "○ "}Self-hosted`,
+        genericName: "Region",
+        comment: q,
+        iconId: "network-server",
+        setRegion: q
+      });
+    }
+    return entries;
+  }
+
+  function loginVault(monitorId, email) {
+    loginProc.monitorId = monitorId;
+    loginProc.command = [Host.bitwarden, "setup", email, root.vaultRegion];
+    loginProc.running = true;
+  }
+
+  Process {
+    id: loginProc
+    property string monitorId: ""
+    onExited: code => {
+      if (code === 0) GlobalState.openLauncher({ id: loginProc.monitorId, mode: "bitwarden" });
     }
   }
 
