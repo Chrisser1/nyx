@@ -3,6 +3,7 @@
   let
     cfg = config.programs.nyx;
     inherit (lib) mkOption types;
+    keybinds = import ./_keybinds { inherit lib; };
 
     gslapper = import ./_helpers/gslapper.nix {
       inherit pkgs lib;
@@ -157,6 +158,40 @@
         description = "Seconds before a copied secret is cleared from the clipboard; 0 keeps it.";
       };
 
+      keybinds = {
+        enable = mkOption {
+          type = types.bool;
+          default = true;
+          description = "Bind nyx's shortcuts in Hyprland and list them in the system panel.";
+        };
+        modifier = mkOption {
+          type = types.str;
+          default = "SUPER";
+          description = "What MOD stands for in `keybinds.binds`.";
+        };
+        binds = mkOption {
+          default = keybinds.defaults;
+          description = ''
+            Binds in order. Each sets `shortcut` (a global shortcut the shell
+            registers) or `command` (run with `exec_cmd`), the `keys` as Hyprland
+            writes them with MOD for the modifier, and a `label` for the panel.
+          '';
+          type = types.listOf (types.submodule {
+            options = {
+              keys = mkOption { type = types.str; };
+              label = mkOption { type = types.str; };
+              shortcut = mkOption { type = types.nullOr types.str; default = null; };
+              command = mkOption { type = types.nullOr types.str; default = null; };
+              release = mkOption { type = types.bool; default = false; };
+              nonConsuming = mkOption { type = types.bool; default = false; };
+              locked = mkOption { type = types.bool; default = false; };
+              repeating = mkOption { type = types.bool; default = false; };
+              hidden = mkOption { type = types.bool; default = false; description = "Bound, but not listed."; };
+            };
+          });
+        };
+      };
+
       theme = {
         source = mkOption {
           type = types.enum [ "scheme" "wallpaper" ];
@@ -202,6 +237,12 @@
       home.activation.nyxTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${lib.getExe theming.theme} apply || echo "nyx: theme apply failed" >&2
       '';
+
+      wayland.windowManager.hyprland.extraConfig = lib.mkIf cfg.keybinds.enable
+        (lib.mkAfter (keybinds.lua { inherit (cfg.keybinds) modifier binds; }));
+      xdg.configFile."nyx/keybinds.json" = lib.mkIf cfg.keybinds.enable {
+        text = keybinds.json { inherit (cfg.keybinds) modifier binds; };
+      };
 
       programs.kitty.extraConfig = lib.mkIf cfg.theme.targets.kitty.enable (lib.mkAfter "include themes/nyx.conf");
       gtk.gtk3.extraCss = lib.mkIf cfg.theme.targets.gtk3.enable ''@import url("nyx.css");'';

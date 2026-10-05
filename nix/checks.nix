@@ -28,6 +28,17 @@
     dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ] { };
     tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ] { };
     calendarStubbed = stubbed "calendar" [ (stub "nyx-calendar-backend") (stub "evolution") ] { };
+    # The default keybinds as Lua and as the shell's JSON.
+    keybindsRendered =
+      let
+        kb = import ./_keybinds { inherit lib; };
+        binds = map (b: { shortcut = null; command = null; release = false; nonConsuming = false; locked = false; repeating = false; hidden = false; } // b) kb.defaults;
+        args = { modifier = "SUPER"; inherit binds; };
+      in {
+        inherit binds;
+        lua = pkgs.writeText "keybinds.lua" (kb.lua args);
+        json = pkgs.writeText "keybinds.json" (kb.json args);
+      };
     # Prints one frame every 100 ms, like cava with four raw ascii bars.
     fakeCava = pkgs.writeShellScript "fake-cava" "while :; do echo \"0;50;100;20\"; sleep 0.1; done";
     bitwardenStubbed = stubbed "bitwarden" (map stub [ "rbw" "wl-copy" "wl-paste" "notify-send" ] ++ [ pkgs.jq pkgs.coreutils pkgs.findutils pkgs.gnugrep ]) { NYX_BITWARDEN_CLEAR = "1"; NYX_BITWARDEN_PINENTRY = "/stub/pinentry"; };
@@ -178,6 +189,26 @@
         bash ${./_helpers/tailnet-test.sh}
         touch $out
       '';
+
+      # The keybind list renders valid Lua with one bind each, and the shell's
+      # JSON leaves out the hidden ones.
+      keybinds = pkgs.runCommand "nyx-keybinds-test" { nativeBuildInputs = [ pkgs.lua pkgs.jq ]; } ''
+          luac -p ${keybindsRendered.lua}
+          [ "$(grep -c '^hl.bind(' ${keybindsRendered.lua})" = ${toString (builtins.length keybindsRendered.binds)} ] || { echo "FAIL: one hl.bind per entry"; exit 1; }
+          grep -qF 'hl.bind("ALT + ALT_L", nyx("windowSwitcherCommit"), { release = true, non_consuming = true })' ${keybindsRendered.lua} || { echo "FAIL: release bind"; exit 1; }
+          grep -qF 'hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd("nyx-screenshot region"))' ${keybindsRendered.lua} || { echo "FAIL: command bind"; exit 1; }
+          [ "$(jq length ${keybindsRendered.json})" = ${toString (builtins.length (builtins.filter (b: !b.hidden) keybindsRendered.binds))} ] || { echo "FAIL: hidden binds listed"; exit 1; }
+          jq -e 'all(.[]; (.keys | type == "string") and (.label | length > 0))' ${keybindsRendered.json} > /dev/null || { echo "FAIL: entries need keys and a label"; exit 1; }
+          jq -e 'any(.[]; .keys == "SUPER + T" and .label == "System panel")' ${keybindsRendered.json} > /dev/null || { echo "FAIL: system panel entry"; exit 1; }
+          touch $out
+        '';
+
+      keybinds-panel = qmlTest "keybinds" {
+        setup = ''
+          mkdir -p $HOME/.config/nyx
+          cp ${keybindsRendered.json} $HOME/.config/nyx/keybinds.json
+        '';
+      };
 
       bitwarden = pkgs.runCommand "nyx-bitwarden-test" {
         nativeBuildInputs = [ bitwardenStubbed pkgs.jq (stub "wl-copy") (stub "rbw") ];

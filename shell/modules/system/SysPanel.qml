@@ -43,6 +43,10 @@ Item {
   readonly property bool active: GlobalState.sysOpen
     && GlobalState.sysMonitorId === root.monitorId
 
+  // The list area shows the keybind cheat sheet instead of processes.
+  property bool showKeys: false
+  onActiveChanged: if (!root.active) root.showKeys = false
+
   // Only render while on-screen or mid-transition.
   visible: panel.y > -Style.system.height
 
@@ -406,6 +410,12 @@ Item {
           font.pointSize: Style.font.tiny
           Layout.alignment: Qt.AlignVCenter
         }
+        IconButton {
+          glyph: "󰌌"
+          label: "keys"
+          opacity: root.showKeys ? 1 : 0.6
+          onActivated: root.showKeys = !root.showKeys
+        }
       }
 
       Divider { }
@@ -620,6 +630,7 @@ Item {
 
       // ── Processes ────────────────────────────────────────────────────
       RowLayout {
+        visible: !root.showKeys
         Layout.fillWidth: true
         spacing: Style.spacing.p1
 
@@ -644,6 +655,7 @@ Item {
       }
 
       Item {
+        visible: !root.showKeys
         Layout.fillWidth: true
         Layout.fillHeight: true
 
@@ -740,6 +752,78 @@ Item {
         }
       }
 
+
+      // ── Keybinds ─────────────────────────────────────────────────────
+      Item {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        visible: root.showKeys
+
+        ListView {
+          id: keyList
+          anchors.fill: parent
+          clip: true
+          spacing: 0
+          boundsBehavior: Flickable.StopAtBounds
+          model: Keybinds.entries
+
+          delegate: RowLayout {
+            id: bind
+            objectName: "bind"
+            required property var modelData
+            width: keyList.width
+            height: Style.system.rowHeight
+            spacing: Style.spacing.p1
+
+            Text {
+              Layout.leftMargin: Style.spacing.p1
+              Layout.fillWidth: true
+              text: bind.modelData.label
+              elide: Text.ElideRight
+              color: Style.colors.white
+              font.family: Style.font.main
+              font.pointSize: Style.font.small
+            }
+
+            Row {
+              Layout.rightMargin: Style.spacing.p1
+              spacing: Style.spacing.p0
+
+              Repeater {
+                model: bind.modelData.parts
+
+                Rectangle {
+                  id: cap
+                  required property string modelData
+                  width: capText.implicitWidth + Style.spacing.p2 * 2
+                  height: Style.system.rowHeight - Style.spacing.p1 * 2
+                  color: "transparent"
+                  border.width: Style.bar.borderWidth
+                  border.color: Style.colors.lineStrong
+
+                  Text {
+                    id: capText
+                    anchors.centerIn: parent
+                    text: cap.modelData
+                    color: Style.colors.brightWhite
+                    font.family: Style.font.main
+                    font.pointSize: Style.font.tiny
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        Text {
+          anchors.centerIn: parent
+          visible: keyList.count === 0
+          text: "No keybinds listed"
+          color: Style.colors.gray4
+          font.family: Style.font.main
+          font.pointSize: Style.font.tiny
+        }
+      }
       Divider { }
 
       // ── Footer ───────────────────────────────────────────────────────
