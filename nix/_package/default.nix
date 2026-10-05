@@ -1,5 +1,5 @@
 # shell/ with a generated Host.qml, run from the store as `nyx-shell`.
-{ pkgs, lib, helpers, hyprland, outputs, terminal, iconTheme }:
+{ pkgs, lib, helpers, theme, hyprland, outputs, terminal, iconTheme }:
 let
   exe = lib.getExe;
 
@@ -21,6 +21,7 @@ let
       readonly property string monitors: "${exe helpers.monitors}"
       readonly property string clipboard: "${exe helpers.clipboard}"
       readonly property string wallpaper: "${exe helpers.wallpaper}"
+      readonly property string theme: "${exe theme}"
       readonly property string calendar: "${exe helpers.calendar}"
       readonly property string calc: "${exe helpers.calc}"
       readonly property string brightnessctl: "${exe pkgs.brightnessctl}"

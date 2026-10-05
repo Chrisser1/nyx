@@ -26,6 +26,7 @@ Singleton {
   readonly property string monitors: "nyx-monitors"
   readonly property string clipboard: "nyx-clipboard"
   readonly property string wallpaper: "nyx-wallpaper"
+  readonly property string theme: "nyx-theme"
   readonly property string calendar: "nyx-calendar"
   readonly property string calc: "nyx-calc"
   readonly property string brightnessctl: "brightnessctl"

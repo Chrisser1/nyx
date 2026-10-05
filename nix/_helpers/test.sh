@@ -22,4 +22,17 @@ expect_usage nyx-screenshot bogus
 
 nyx-kbd-backlight up || fail "kbd-backlight must no-op without an LED"
 
+# Thumbnails: one per wallpaper, JPEGs, cached between runs.
+export XDG_CACHE_HOME=$PWD/cache
+thumbs=$(nyx-wallpaper thumbs | sort)
+[ "$(cut -f 1 <<< "$thumbs")" = "$(printf 'a/still.png\nb/clip.mp4')" ] || fail "thumbs list: $thumbs"
+while IFS=$'\t' read -r rel thumb; do
+  [ -s "$thumb" ] || fail "no thumbnail for $rel"
+  [ "$(od -An -tx1 -N3 "$thumb" | tr -d ' ')" = ffd8ff ] || fail "$rel thumbnail is not a JPEG"
+done <<< "$thumbs"
+before=$(stat -c %Y "$XDG_CACHE_HOME"/nyx/wallpapers/*)
+sleep 1
+nyx-wallpaper thumbs > /dev/null
+[ "$(stat -c %Y "$XDG_CACHE_HOME"/nyx/wallpapers/*)" = "$before" ] || fail "thumbnails regenerated"
+
 echo "all helper tests passed"

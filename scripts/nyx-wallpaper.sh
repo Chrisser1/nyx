@@ -2,8 +2,9 @@
 ROOT="$NYX_WALLPAPER_DIR"
 STATE="${XDG_STATE_HOME:-$HOME/.local/state}/nyx"
 FILE="$STATE/wallpapers.json"
+THUMBS="${XDG_CACHE_HOME:-$HOME/.cache}/nyx/wallpapers"
 SOCKDIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/nyx-gslapper"
-mkdir -p "$STATE" "$SOCKDIR"
+mkdir -p "$STATE" "$SOCKDIR" "$THUMBS"
 [ -f "$FILE" ] || echo '{}' > "$FILE"
 
 is_video() { case "${1,,}" in *.mp4|*.mkv|*.webm|*.avi|*.mov) return 0 ;; *) return 1 ;; esac; }
@@ -13,6 +14,23 @@ list() {
     \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \
        -o -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' \) \
     | sed 's|^\./||' | sort)
+}
+
+# Cached thumbnail for a wallpaper: a frame for videos, a downscale for stills.
+thumb() {
+  local rel=$1 abs="$ROOT/$1" out
+  # The size is part of the key so a new size regenerates.
+  out="$THUMBS/$(printf '%s@h480' "$abs" | sha1sum | cut -c 1-16).jpg"
+  if [ ! -s "$out" ]; then
+    if is_video "$rel"; then set -- -ss 1 -i "$abs"; else set -- -i "$abs"; fi
+    if ffmpeg -nostdin -loglevel error -y "$@" -frames:v 1 -vf "scale=-2:480" -q:v 4 "$out.tmp.jpg"; then
+      mv "$out.tmp.jpg" "$out"
+    else
+      rm -f "$out.tmp.jpg"
+    fi
+  fi
+  # An empty thumbnail means it could not be made.
+  if [ -s "$out" ]; then printf '%s\t%s\n' "$rel" "$out"; else printf '%s\t\n' "$rel"; fi
 }
 
 outputs() { hyprctl -j monitors | jq -r '.[].name'; }
@@ -51,6 +69,18 @@ case "${1:-}" in
   root) echo "$ROOT" ;;
   list) list ;;
   outputs) outputs ;;
+  thumbs)
+    # One line per wallpaper: relative path, thumbnail. Four at a time.
+    while IFS= read -r rel; do
+      while [ "$(jobs -rp | wc -l)" -ge 4 ]; do wait -n; done
+      thumb "$rel" &
+    done < <(list)
+    wait ;;
+  theme)
+    # Theme from the wallpaper on the first output.
+    rel=$(jq -r --arg o "$(outputs | sed -n 1p)" '.[$o] // ""' "$FILE")
+    [ -n "$rel" ] || { echo "nyx-wallpaper: no wallpaper set" >&2; exit 1; }
+    nyx-theme wallpaper "$ROOT/$rel" ;;
   current) jq -r --arg o "${2:-}" '.[$o] // ""' "$FILE" ;;
   state) cat "$FILE" ;;
   set)
@@ -68,6 +98,6 @@ case "${1:-}" in
       { apply "$o" "$rel" && save "$o" "$rel"; } || true
     done ;;
   *)
-    echo "usage: nyx-wallpaper {list|outputs|current <out>|state|set <out> <rel>|set-all <rel>|restore|root}" >&2
+    echo "usage: nyx-wallpaper {list|thumbs|outputs|current <out>|state|set <out> <rel>|set-all <rel>|restore|theme|root}" >&2
     exit 2 ;;
 esac

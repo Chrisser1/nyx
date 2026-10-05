@@ -94,6 +94,15 @@ Singleton {
       iconId: "preferences-desktop-wallpaper"
     },
     {
+      id: "nyx-mode-theme",
+      name: "Theme",
+      comment: "Pick a colour scheme, or follow the wallpaper",
+      mode: "theme",
+      genericName: "Menu",
+      categories: ["Appearance", "Configuration"],
+      iconId: "preferences-desktop-theme"
+    },
+    {
       id: "nyx-mode-power",
       name: "Power",
       comment: "Power options for system (shutdown, restart, logout etc)",

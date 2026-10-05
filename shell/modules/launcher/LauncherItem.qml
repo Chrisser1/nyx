@@ -36,6 +36,13 @@ Item {
   property var actions: []
   property bool isNotification: false
   property bool isCurrentItem: ListView.isCurrentItem
+
+  // Preview cards (wallpapers, themes) replace the icon and description.
+  property string preview: ""
+  property var palette: []
+  property string swatch: ""
+  property bool current: false
+  readonly property bool hasPreview: preview !== "" || palette.length > 0 || swatch !== ""
   implicitHeight: parent?.height ?? 0
   // height: parent?.height ?? 0
   implicitWidth: {
@@ -244,7 +251,7 @@ Item {
 
     Quad {
       width: 30
-      visible: !root.canClose
+      visible: !root.canClose && !root.hasPreview
       height: 30
       anchors.topMargin: Style.spacing.p2
       fillColor: "transparent"
@@ -259,7 +266,7 @@ Item {
     Quad {
       width: 30
       height: 30
-      visible: !root.canClose
+      visible: !root.canClose && !root.hasPreview
       fillColor: "transparent"
       anchors.topMargin: Style.spacing.p2
       anchors.rightMargin: Style.spacing.p2
@@ -286,11 +293,83 @@ Item {
         border.color: Style.colors.gray3
         border.width: Style.bar.borderWidth
       }
+
+      Rectangle {
+        visible: root.hasPreview
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        color: root.swatch || (root.palette[0] ?? Style.colors.gray1)
+        border.width: Style.bar.borderWidth
+        border.color: root.current ? Style.colors.accent : Style.colors.gray3
+        clip: true
+
+        Image {
+          visible: root.preview !== ""
+          anchors.fill: parent
+          anchors.margins: parent.border.width
+          source: root.preview ? `file://${root.preview}` : ""
+          fillMode: Image.PreserveAspectCrop
+          asynchronous: true
+        }
+
+        // base16 preview: background, foreground sample, then the eight accents.
+        Column {
+          visible: root.palette.length === 16
+          anchors.centerIn: parent
+          spacing: Style.spacing.p2
+
+          Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "Aa"
+            color: root.palette[5] ?? "transparent"
+            font.family: Style.font.main
+            font.pointSize: Style.font.xl
+            font.bold: true
+          }
+
+          Grid {
+            columns: 4
+            spacing: Style.spacing.p1
+
+            Repeater {
+              model: root.palette.slice(8)
+              delegate: Rectangle {
+                required property string modelData
+                width: Style.font.size4 * 1.4
+                height: width
+                color: modelData
+              }
+            }
+          }
+        }
+
+        Text {
+          visible: root.current
+          anchors.top: parent.top
+          anchors.left: parent.left
+          anchors.margins: Style.spacing.p1
+          text: "\u{F012C} Current"
+          color: Style.colors.onAccent
+          font.family: Style.font.main
+          font.pointSize: Style.font.small
+          font.bold: true
+
+          Rectangle {
+            anchors.fill: parent
+            anchors.margins: -Style.spacing.p0
+            z: -1
+            color: Style.colors.accent
+          }
+        }
+      }
+
       ColumnLayout {
         Layout.fillWidth: true
+        Layout.bottomMargin: root.hasPreview ? 20 : 0
         spacing: Style.spacing.p2
 
         Item {
+          visible: !root.hasPreview
           implicitWidth: 120
           implicitHeight: 120
           Layout.alignment: Qt.AlignHCenter
@@ -455,6 +534,7 @@ Item {
       }
 
       Text {
+        visible: !root.hasPreview
         color: Style.colors.white
         text: {
           if (root.description) {

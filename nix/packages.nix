@@ -31,6 +31,7 @@
     packages = {
       default = import ./_package {
         inherit pkgs lib helpers;
+        inherit (theming) theme;
         hyprland = pkgs.hyprland;
         outputs = { primary = ""; left = ""; right = ""; };
         terminal = "kitty";

@@ -117,6 +117,7 @@ Item {
     function onLauncherModeChanged() {
       if (!root.owner) return;
       if (GlobalState.launcherMode === "wallpaper") LauncherData.refreshWallpapers();
+      else if (GlobalState.launcherMode === "theme") LauncherData.refreshThemes();
       else if (GlobalState.launcherMode === "display") LauncherData.refreshMonitors();
       root.evaluateQuery();
     }
@@ -156,6 +157,17 @@ Item {
     onPressed: {
       if (Hyprland.focusedMonitor?.name === root.monitorId) {
         GlobalState.toggleLauncher({ id: Hyprland.focusedMonitor?.name, mode: "wallpaper" })
+      }
+    }
+  }
+
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "toggleTheme"
+    description: "Opens the launcher in theme-picker mode"
+    onPressed: {
+      if (Hyprland.focusedMonitor?.name === root.monitorId) {
+        GlobalState.toggleLauncher({ id: Hyprland.focusedMonitor?.name, mode: "theme" })
       }
     }
   }
@@ -262,6 +274,9 @@ Item {
         } else if (s === "wallpaper") {
           const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/wallpaper`, "")
           return Fuzzy.query(q, LauncherData.wallpaperData)
+        } else if (s === "theme") {
+          const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/theme`, "")
+          return Fuzzy.query(q, LauncherData.themeData)
         } else if (s === "calc") {
           return LauncherData.calcData
         } else {
@@ -283,6 +298,9 @@ Item {
         } else if (s === "menu") {
           GlobalState.launcherMode = entry.mode
           GlobalState.searchQuery = ""
+        } else if (s === "theme") {
+          // Stays open so themes can be compared.
+          LauncherData.applyTheme(entry)
         } else if (s === "power"
           || s === "display"
           || s === "audio"
@@ -323,6 +341,10 @@ Item {
 
           notificationId: modelData?.notificationId ?? -1
           imageSource: modelData?.image ?? ""
+          preview: LauncherData.previewFor(modelData)
+          palette: modelData?.palette ?? []
+          swatch: LauncherData.swatchFor(modelData)
+          current: LauncherData.isCurrent(modelData)
           name: modelData?.name ?? modelData?.appName ?? ""
           favorite: Config.favorites.includes(modelData?.id ?? "") ?? false
           isNotification: modelData?.isNotification ?? false

@@ -3,7 +3,7 @@ CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/nyx/theme"
 mkdir -p "$(dirname "$STATE")" "$CACHE"
 
 usage() {
-  echo "usage: nyx-theme {scheme <name> [accent]|wallpaper <path>|mode <dark|light>|sync <path>|apply|current|schemes}" >&2
+  echo "usage: nyx-theme {scheme <name> [accent]|wallpaper <path>|mode <dark|light>|accent <base08..base0F>|sync <path>|apply|current|schemes}" >&2
   exit 2
 }
 
@@ -63,8 +63,16 @@ case "${1:-}" in
       save --arg w "$(realpath "$2")" '.wallpaper = $w'
       apply_state
     fi ;;
-  apply) apply_state ;;
+  apply)
+    apply_state
+    # Persist the default so watchers have a file to follow.
+    if [ ! -f "$STATE" ]; then save .; fi ;;
   current) state ;;
-  schemes) find "$NYX_SCHEMES_DIR" -name '*.yaml' -printf '%f\n' | sed 's/\.yaml$//' | sort ;;
+  accent)
+    # Applies to schemes; Material themes derive their own accent.
+    case "${2:-}" in base0[89A-F]) ;; *) usage ;; esac
+    save --arg a "$2" '.accent = $a'
+    if [ "$(field source)" = scheme ]; then apply_state; fi ;;
+  schemes) cat "$NYX_SCHEMES_INDEX" ;;
   *) usage ;;
 esac

@@ -32,6 +32,7 @@
 
     shell = import ./_package {
       inherit pkgs lib helpers;
+      inherit (theming) theme;
       inherit (cfg) outputs terminal;
       iconTheme = cfg.iconTheme.name;
       hyprland = cfg.hyprlandPackage;

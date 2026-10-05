@@ -33,7 +33,7 @@ in rec {
   calc = script "calc" (with pkgs; [ libqalculate wl-clipboard ]) { NYX_QALC_CONFIG = "${qalcConfig}"; };
   calendar = script "calendar" (with pkgs; [ calendarBackend evolution gnome-calendar ]) { };
   monitors = script "monitors" (with pkgs; [ jq libnotify wdisplays hyprland ]) { };
-  wallpaper = script "wallpaper" (with pkgs; [ jq procps findutils gslapper hyprland theme ]) {
+  wallpaper = script "wallpaper" (with pkgs; [ jq procps findutils coreutils ffmpeg-headless gslapper hyprland theme ]) {
     NYX_WALLPAPER_DIR = wallpaperDir;
     NYX_WALLPAPER_DEFAULT = defaultWallpaper;
   };

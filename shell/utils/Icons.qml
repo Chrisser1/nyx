@@ -37,7 +37,7 @@ Singleton {
   }
 
   function getEntryIcon(entry: DesktopEntry): string {
-    const icon = root.getAlias(entry.id) ?? entry?.icon
+    const icon = root.getAlias(entry?.id ?? "") ?? entry?.icon
     return Quickshell.iconPath(icon, root.icons.missing)
   }
 

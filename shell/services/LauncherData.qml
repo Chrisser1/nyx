@@ -159,39 +159,174 @@ Singleton {
   }
 
   // ---- Wallpapers ------------------------------------------------------------
-  // `nyx-wallpaper list` emits paths relative to the wallpaper root, so the
-  // stored selection survives a rebuild or a store GC.
+  // Paths are relative to the wallpaper root, so a saved choice survives a
+  // rebuild. The list shows at once; thumbnails fill in when they are ready.
   property list<var> wallpaperEntries: []
+  property var wallpaperThumbs: ({})
   property list<var> wallpaperData: wallpaperEntries.map(a => ({ name: Fuzzy.prepare(a.name), entry: a }))
 
-  function refreshWallpapers() { wallProc.running = true }
+  function refreshWallpapers() {
+    wallProc.running = true;
+    thumbProc.running = true;
+  }
 
   Process {
     id: wallProc
     command: [Host.wallpaper, "list"]
-    running: false
     stdout: StdioCollector {
       onStreamFinished: {
-        const out = [];
-        for (const rel of this.text.split("\n")) {
-          if (!rel.length) continue;
+        root.wallpaperEntries = this.text.split("\n").filter(Boolean).map(rel => {
           const isVideo = /\.(mp4|mkv|webm|avi|mov)$/i.test(rel);
           const slash = rel.lastIndexOf("/");
-          const folder = slash > 0 ? rel.slice(0, slash) : "";
-          const file = rel.slice(slash + 1).replace(/\.[^.]+$/, "");
-          out.push({
+          return {
             id: `nyx-wall-${rel}`,
-            name: file,
-            comment: isVideo ? `Animated wallpaper (${folder})` : `Wallpaper (${folder})`,
+            rel: rel,
+            name: rel.slice(slash + 1).replace(/\.[^.]+$/, ""),
             genericName: isVideo ? "Video" : "Image",
-            categories: ["Wallpaper", folder],
+            categories: slash > 0 ? [rel.slice(0, slash)] : [],
             iconId: isVideo ? "video-x-generic" : "image-x-generic",
             script: [Host.wallpaper, "set-all", rel]
-          });
-        }
-        root.wallpaperEntries = out;
+          };
+        });
       }
     }
+  }
+
+  Process {
+    id: thumbProc
+    command: [Host.wallpaper, "thumbs"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        const thumbs = {};
+        for (const line of this.text.split("\n")) {
+          const [rel, thumb] = line.split("\t");
+          if (thumb) thumbs[rel] = thumb;
+        }
+        root.wallpaperThumbs = thumbs;
+      }
+    }
+  }
+
+  // ---- Themes ----------------------------------------------------------------
+  // Every base16 scheme from `nyx-theme schemes`, plus following the wallpaper,
+  // light/dark and the accent slot. `themeState` mirrors theme.json.
+  //
+  // The launcher's ScriptModel keeps delegates for unchanged entries, so anything
+  // that changes while it is open (thumbnails, current marker, accent swatches)
+  // is looked up live through the functions below rather than stored in entries.
+  property list<var> themeSchemes: []
+  property var themeState: ({})
+  readonly property var accentSlots: [
+    ["base08", "Red"], ["base09", "Orange"], ["base0A", "Yellow"], ["base0B", "Green"],
+    ["base0C", "Cyan"], ["base0D", "Blue"], ["base0E", "Purple"], ["base0F", "Brown"]
+  ]
+
+  readonly property var currentScheme: themeSchemes.find(s => s.id === themeState.scheme) ?? null
+  readonly property bool followingWallpaper: themeState.source === "wallpaper"
+
+  property list<var> themeEntries: [
+    {
+      id: "nyx-theme-follow",
+      name: "Follow wallpaper",
+      genericName: "Material You",
+      comment: "Generate colours from the current wallpaper",
+      iconId: "preferences-desktop-wallpaper",
+      themeAction: ["follow"]
+    },
+    {
+      id: "nyx-theme-mode",
+      name: "Light / dark",
+      genericName: "Material You",
+      comment: "Toggle the mode used when following the wallpaper",
+      iconId: "preferences-desktop-theme",
+      themeAction: ["mode"]
+    },
+    ...root.accentSlots.map(([slot, label]) => ({
+      id: `nyx-theme-accent-${slot}`,
+      name: `${label} accent`,
+      genericName: "Accent",
+      comment: `Use ${slot} of the scheme as the accent`,
+      themeAction: ["accent", slot]
+    })),
+    ...root.themeSchemes.map(scheme => ({
+      id: `nyx-theme-${scheme.id}`,
+      name: scheme.name,
+      genericName: scheme.variant === "light" ? "Light" : "Dark",
+      comment: scheme.id,
+      palette: scheme.colors,
+      themeAction: ["scheme", scheme.id]
+    }))
+  ]
+  property list<var> themeData: themeEntries.map(a => ({ name: Fuzzy.prepare(a.name), entry: a }))
+
+  function previewFor(entry) {
+    return entry?.rel !== undefined ? (root.wallpaperThumbs[entry.rel] ?? "") : "";
+  }
+
+  function isCurrent(entry) {
+    const [action, arg] = entry?.themeAction ?? [];
+    const s = root.themeState;
+    if (action === "follow") return root.followingWallpaper;
+    if (action === "accent") return !root.followingWallpaper && s.accent === arg;
+    if (action === "scheme") return !root.followingWallpaper && s.scheme === arg;
+    return false;
+  }
+
+  function swatchFor(entry) {
+    const [action, arg] = entry?.themeAction ?? [];
+    if (action !== "accent") return "";
+    const index = root.accentSlots.findIndex(([slot]) => slot === arg);
+    return root.currentScheme?.colors[8 + index] ?? "";
+  }
+
+  function themeCommand(entry) {
+    const [action, arg] = entry.themeAction;
+    switch (action) {
+    case "follow": return [Host.wallpaper, "theme"];
+    case "mode": return [Host.theme, "mode", root.themeState.mode === "light" ? "dark" : "light"];
+    default: return [Host.theme, action, arg];
+    }
+  }
+
+  function refreshThemes() {
+    if (!root.themeSchemes.length) schemesProc.running = true;
+    themeStateProc.running = true;
+  }
+
+  // One change at a time; matugen should not be interrupted mid-render.
+  function applyTheme(entry) {
+    if (themeApplyProc.running) return;
+    themeApplyProc.command = root.themeCommand(entry);
+    themeApplyProc.running = true;
+  }
+
+  Process {
+    id: themeApplyProc
+    onExited: themeStateProc.running = true
+  }
+
+  Process {
+    id: schemesProc
+    command: [Host.theme, "schemes"]
+    stdout: StdioCollector {
+      onStreamFinished: root.themeSchemes = JSON.parse(this.text)
+    }
+  }
+
+  Process {
+    id: themeStateProc
+    command: [Host.theme, "current"]
+    stdout: StdioCollector {
+      onStreamFinished: root.themeState = JSON.parse(this.text)
+    }
+  }
+
+  // nyx-theme rewrites it on every change.
+  FileView {
+    path: `${Quickshell.env("XDG_STATE_HOME") || `${Quickshell.env("HOME")}/.local/state`}/nyx/theme.json`
+    watchChanges: true
+    printErrors: false
+    onFileChanged: themeStateProc.running = true
   }
 
   // ---- Calculator ------------------------------------------------------------

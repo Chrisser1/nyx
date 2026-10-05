@@ -42,7 +42,8 @@ nyx-theme-hook kitty
 for _ in $(seq 20); do [ -e reloaded ] && break; sleep 0.1; done
 [ -e reloaded ] || fail "kitty hook did not signal kitty"
 
-nyx-theme schemes | grep -qx gruvbox-dark-medium || fail "schemes list"
+nyx-theme schemes | jq -e 'length > 300 and any(.id == "gruvbox-dark-medium")
+  and all(.colors | length == 16 and all(test("^#[0-9a-fA-F]{6}$")))' > /dev/null || fail "scheme index"
 [ "$(nyx-theme current | jq -r .scheme)" = gruvbox-dark-medium ] || fail "default state"
 
 # Named scheme.
@@ -60,6 +61,11 @@ nyx-theme apply
 # The accent persists when only the scheme changes.
 nyx-theme scheme nord
 [ "$(nyx-theme current | jq -r .accent)" = base0B ] || fail "accent not kept"
+
+# Changing only the accent re-renders the scheme.
+expect_status 2 nyx-theme accent base10
+nyx-theme accent base0E
+[ "$(jq -r .accent "$colors")" = "#b48ead" ] || fail "accent change: $(jq -r .accent "$colors")"
 nord=$(cat "$colors")
 
 # Wallpaper changes are ignored while following a scheme.

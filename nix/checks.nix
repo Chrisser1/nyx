@@ -1,9 +1,11 @@
 { inputs, ... }: {
   perSystem = { pkgs, lib, system, config, nyx, ... }:
   let
-    wallpapers = pkgs.runCommand "nyx-test-wallpapers" { } ''
+    wallpapers = pkgs.runCommand "nyx-test-wallpapers" { nativeBuildInputs = [ pkgs.imagemagick pkgs.ffmpeg-headless ]; } ''
       mkdir -p $out/a $out/b
-      touch $out/a/still.png $out/b/clip.mp4 $out/b/notes.txt
+      magick -size 64x36 xc:'#b8bb26' $out/a/still.png
+      ffmpeg -loglevel error -f lavfi -i testsrc=duration=2:size=64x36:rate=10 -pix_fmt yuv420p $out/b/clip.mp4
+      touch $out/b/notes.txt
     '';
 
     helpers = import ./_helpers {
@@ -54,6 +56,14 @@
           printf 'https://example.com' | nyx-clipboard store
           magick -size 1362x766 gradient:red-blue image.png
           nyx-clipboard store < image.png
+        '';
+      };
+
+      launcher = qmlTest "launcher" {
+        setup = ''
+          substituteInPlace cfg/config/Host.qml \
+            --replace-fail '"nyx-theme"' '"${lib.getExe nyx.theming.theme}"' \
+            --replace-fail '"nyx-wallpaper"' '"${lib.getExe helpers.wallpaper}"'
         '';
       };
 
