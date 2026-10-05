@@ -7,6 +7,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs
 import qs.components
 import qs.config
@@ -122,46 +123,17 @@ SplitPanel {
     spacing: Style.spacing.p3
     visible: root.current !== null
 
-    ColumnLayout {
+    FieldList {
       Layout.fillWidth: true
-      spacing: Style.spacing.p2
-
-      Repeater {
-        model: root.current ? [
-          ["Image", root.current.image],
-          ["State", root.current.state],
-          ["Ports", root.current.ports || "None"],
-          ["Project", root.current.project || "None"],
-          ["Created", root.current.created],
-          ["ID", root.current.id]
-        ] : []
-
-        delegate: Item {
-          id: field
-          required property var modelData
-          Layout.fillWidth: true
-          implicitHeight: value.implicitHeight
-
-          Text {
-            id: label
-            width: Style.clipboard.rowHeight * 2
-            text: field.modelData[0]
-            color: Style.colors.brightBlack
-            font.family: Style.font.main
-            font.pointSize: Style.font.large
-          }
-          Text {
-            id: value
-            anchors.left: label.right
-            anchors.right: parent.right
-            text: field.modelData[1]
-            wrapMode: Text.WrapAnywhere
-            color: field.modelData[0] === "State" ? root.stateColor(field.modelData[1]) : Style.colors.brightWhite
-            font.family: Style.font.main
-            font.pointSize: Style.font.large
-          }
-        }
-      }
+      fields: root.current ? [
+        { label: "Image", value: root.current.image },
+        { label: "State", value: root.current.state, color: root.stateColor(root.current.state) },
+        { label: "Ports", value: root.current.ports || "None" },
+        { label: "Project", value: root.current.project || "None" },
+        { label: "Created", value: root.current.created },
+        { label: "ID", value: root.current.id, copy: root.current.id }
+      ] : []
+      onCopied: text => Quickshell.clipboardText = text
     }
 
     Item { Layout.fillHeight: true }

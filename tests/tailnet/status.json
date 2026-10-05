@@ -1,0 +1,15 @@
+{
+  "BackendState": "Running",
+  "CurrentTailnet": { "Name": "example.com", "MagicDNSSuffix": "tail0.ts.net" },
+  "Self": { "ID": "s1", "HostName": "laptop", "DNSName": "laptop.tail0.ts.net.", "OS": "linux", "Online": true,
+            "TailscaleIPs": ["100.64.0.1", "fd7a::1"], "ExitNode": false, "ExitNodeOption": false },
+  "Peer": {
+    "k1": { "ID": "p1", "HostName": "Pixel", "DNSName": "pixel.tail0.ts.net.", "OS": "android", "Online": false,
+            "TailscaleIPs": ["100.64.0.2"], "LastSeen": "2026-09-18T12:40:23Z", "CurAddr": "", "Relay": "ams" },
+    "k2": { "ID": "p2", "HostName": "server", "DNSName": "server.tail0.ts.net.", "OS": "linux", "Online": true,
+            "TailscaleIPs": ["100.64.0.3", "fd7a::3"], "LastSeen": "0001-01-01T00:00:00Z", "CurAddr": "1.2.3.4:41641",
+            "Relay": "ams", "ExitNode": true, "ExitNodeOption": true },
+    "k3": { "ID": "p3", "HostName": "pc", "DNSName": "pc-1.tail0.ts.net.", "OS": "linux", "Online": true,
+            "TailscaleIPs": ["100.64.0.4"], "CurAddr": "", "Relay": "fra" }
+  }
+}

@@ -22,6 +22,7 @@ import qs.modules.docker
 import qs.modules.network
 import qs.modules.media
 import qs.modules.system
+import qs.modules.tailnet
 import qs.modules.switcher
 import qs.modules.tray
 import QtQuick
@@ -63,6 +64,13 @@ ShellRoot {
     name: "toggleDocker"
     description: "Toggles the Docker containers panel"
     onPressed: GlobalState.toggleDocker(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
+  }
+
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "toggleTailnet"
+    description: "Toggles the Tailscale panel"
+    onPressed: GlobalState.toggleTailnet(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
   }
 
   GlobalShortcut { // qmllint disable unresolved-type
@@ -137,14 +145,7 @@ ShellRoot {
         HyprlandFocusGrab {
           id: grab
           windows: [main]
-          active: (GlobalState.launcherOpen && GlobalState.launcherMonitorId === scope.monitorId)
-            || (GlobalState.calendarOpen && GlobalState.calendarMonitorId === scope.monitorId)
-            || (GlobalState.wifiOpen && GlobalState.wifiMonitorId === scope.monitorId)
-            || (GlobalState.sysOpen && GlobalState.sysMonitorId === scope.monitorId)
-            || (GlobalState.mediaOpen && GlobalState.mediaMonitorId === scope.monitorId)
-            || (GlobalState.clipboardOpen && GlobalState.clipboardMonitorId === scope.monitorId)
-            || (GlobalState.switcherOpen && GlobalState.switcherMonitorId === scope.monitorId)
-            || (GlobalState.dockerOpen && GlobalState.dockerMonitorId === scope.monitorId)
+          active: GlobalState.overlayOn(scope.monitorId)
           // Deliberately empty, for every overlay. Hyprland fires `cleared`
           // immediately after the grab activates, so closing from here shuts
           // the panel the moment it opens. Click-outside is handled instead by
@@ -229,11 +230,8 @@ ShellRoot {
           states: [
             State {
               name: "open"
-              // Only the monitor the launcher/clipboard/tray menu is on dims.
-              when: ((GlobalState.launcherOpen && GlobalState.launcherMonitorId === scope.monitorId)
-                  || (GlobalState.clipboardOpen && GlobalState.clipboardMonitorId === scope.monitorId)
-                  || (GlobalState.switcherOpen && GlobalState.switcherMonitorId === scope.monitorId)
-                  || (GlobalState.dockerOpen && GlobalState.dockerMonitorId === scope.monitorId)
+              // Only the monitor a centred overlay or the tray menu is on dims.
+              when: (GlobalState.modalOn(scope.monitorId)
                   || (GlobalState.trayMenuOpen && Hyprland.focusedMonitor?.name === scope.monitorId))
                 && scope.windows.length > 0
               PropertyChanges { content.color: Functions.transparentize("#000", 0.7) }
@@ -284,6 +282,10 @@ ShellRoot {
         }
 
         DockerPanel {
+          monitorId: scope.monitorId
+        }
+
+        TailnetPanel {
           monitorId: scope.monitorId
         }
 

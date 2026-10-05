@@ -32,13 +32,15 @@ Singleton {
   property string switcherMonitorId: ""
   property bool dockerOpen: false
   property string dockerMonitorId: ""
+  property bool tailnetOpen: false
+  property string tailnetMonitorId: ""
   property bool mediaOpen: false
   property string mediaMonitorId: ""
   // Window x of the bar widget's centre; the panel hangs under it.
   property real mediaAnchorX: 0
   property bool overlayOpen: root.launcherOpen || root.trayMenuOpen || root.calendarOpen
     || root.wifiOpen || root.sysOpen || root.mediaOpen || root.clipboardOpen
-    || root.switcherOpen || root.dockerOpen
+    || root.switcherOpen || root.dockerOpen || root.tailnetOpen
   property QsMenuHandle activeMenu: null
   property bool trayMenuOpen: false
   property int menuDirection: Qt.LeftToRight
@@ -222,6 +224,21 @@ Singleton {
     else openDocker(id)
   }
 
+  function openTailnet(id = Config.primaryDisplay) {
+    root.closeAll()
+    root.tailnetMonitorId = id
+    root.tailnetOpen = true
+  }
+
+  function closeTailnet() {
+    root.tailnetOpen = false
+  }
+
+  function toggleTailnet(id = Config.primaryDisplay) {
+    if (root.tailnetOpen && root.tailnetMonitorId === id) closeTailnet()
+    else openTailnet(id)
+  }
+
   // Alt+Tab; services/WindowSwitcher drives it.
   function openSwitcher(id = Config.primaryDisplay) {
     root.closeAll()
@@ -231,6 +248,24 @@ Singleton {
 
   function closeSwitcher() {
     root.switcherOpen = false
+  }
+
+  // Centred overlays, which dim their monitor.
+  function modalOn(id) {
+    return (root.launcherOpen && root.launcherMonitorId === id)
+      || (root.clipboardOpen && root.clipboardMonitorId === id)
+      || (root.switcherOpen && root.switcherMonitorId === id)
+      || (root.dockerOpen && root.dockerMonitorId === id)
+      || (root.tailnetOpen && root.tailnetMonitorId === id)
+  }
+
+  // Any overlay that needs the keyboard on monitor `id`.
+  function overlayOn(id) {
+    return root.modalOn(id)
+      || (root.calendarOpen && root.calendarMonitorId === id)
+      || (root.wifiOpen && root.wifiMonitorId === id)
+      || (root.sysOpen && root.sysMonitorId === id)
+      || (root.mediaOpen && root.mediaMonitorId === id)
   }
 
   // Escape and click-outside. The launcher is guarded because closing it
@@ -243,6 +278,7 @@ Singleton {
     root.closeClipboard()
     root.closeSwitcher()
     root.closeDocker()
+    root.closeTailnet()
     if (root.trayMenuOpen) root.closeTrayMenu()
     if (root.launcherOpen) root.closeLauncher()
   }

@@ -25,6 +25,7 @@
     stub = name: pkgs.writeShellScriptBin name (builtins.readFile ./_helpers/stubs/${name}.sh);
     stubbed = name: runtimeInputs: import ./_helpers/script.nix { inherit pkgs; } name runtimeInputs { };
     dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ];
+    tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ];
 
     # Runs tests/<name>/shell.qml headless against a copy of shell/; it prints PASS.
     qmlTest = name: { inputs ? [ ], setup ? "" }:
@@ -85,6 +86,15 @@
         '';
       };
 
+      tailnet-panel = qmlTest "tailnet" {
+        setup = ''
+          export STUB_DIR=$PWD/stub
+          mkdir -p $STUB_DIR
+          cp --no-preserve=mode ${../tests/tailnet/status.json} $STUB_DIR/status.json
+          substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-tailnet"' '"${lib.getExe tailnetStubbed}"'
+        '';
+      };
+
       clipboard = pkgs.runCommand "nyx-clipboard-test" {
         nativeBuildInputs = [ helpers.clipboard pkgs.imagemagick pkgs.jq ];
       } ''
@@ -96,6 +106,14 @@
         nativeBuildInputs = [ dockerStubbed pkgs.jq ];
       } ''
         bash ${./_helpers/docker-test.sh}
+        touch $out
+      '';
+
+      tailnet = pkgs.runCommand "nyx-tailnet-test" {
+        nativeBuildInputs = [ tailnetStubbed pkgs.jq ];
+        STATUS_JSON = "${../tests/tailnet/status.json}";
+      } ''
+        bash ${./_helpers/tailnet-test.sh}
         touch $out
       '';
 

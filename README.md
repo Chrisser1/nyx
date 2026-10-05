@@ -81,3 +81,10 @@ hl.bind("ALT + ALT_L", hl.dsp.global("nyx:windowSwitcherCommit"), { release = tr
 Enter starts, stops or unpauses, Ctrl+R restarts, Ctrl+L follows the logs and
 Ctrl+E opens a shell in the terminal, Shift+Delete twice removes a stopped one.
 The bar shows the running count while anything runs.
+
+## Tailnet
+
+`nyx:toggleTailnet` lists this device and its Tailscale peers: Enter opens ssh
+to an online peer, Ctrl+C copies its IPv4, Ctrl+E toggles it as exit node;
+clicking an address copies it. Going up/down and switching exit nodes needs the
+user to be operator: `services.tailscale.extraSetFlags = [ "--operator=<user>" ]`.
