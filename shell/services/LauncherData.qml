@@ -329,6 +329,36 @@ Singleton {
     onFileChanged: themeStateProc.running = true
   }
 
+  // ---- Emoji ---------------------------------------------------------------
+  // From `nyx-emoji list`, recently used first. Skin tones sit in the drawer.
+  property list<var> emojiEntries: []
+  property list<var> emojiData: emojiEntries.map(a => ({ name: Fuzzy.prepare(a.search), entry: a }))
+
+  function refreshEmoji() { emojiProc.running = true }
+
+  Process {
+    id: emojiProc
+    command: [Host.emoji, "list"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        root.emojiEntries = JSON.parse(this.text).map(e => ({
+          id: `nyx-emoji-${e.e}`,
+          name: e.n,
+          glyph: e.e,
+          genericName: e.g,
+          comment: e.k.join(", "),
+          search: [e.n, ...e.k].join(" "),
+          script: [Host.emoji, "copy", e.e],
+          actions: e.v.map(v => ({
+            id: `nyx-emoji-${v.e}`,
+            name: `${v.e} ${v.n}`,
+            script: [Host.emoji, "copy", v.e]
+          }))
+        }));
+      }
+    }
+  }
+
   // ---- Calculator ------------------------------------------------------------
   // Backed by `nyx-calc eval`, which is one qalc process per query, so the
   // keystrokes are debounced and the running process is never re-argv'd.

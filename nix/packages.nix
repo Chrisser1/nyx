@@ -24,6 +24,7 @@
       defaultWallpaper = "";
       screenshotDir = "/tmp";
       clipboardMaxItems = 500;
+      emojiType = false;
     };
   in {
     _module.args.nyx = { inherit theming helpers; };

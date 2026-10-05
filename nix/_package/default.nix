@@ -24,6 +24,7 @@ let
       readonly property string theme: "${exe theme}"
       readonly property string calendar: "${exe helpers.calendar}"
       readonly property string calc: "${exe helpers.calc}"
+      readonly property string emoji: "${exe helpers.emoji}"
       readonly property string brightnessctl: "${exe pkgs.brightnessctl}"
       readonly property string kbdBacklight: "${exe helpers.kbdBacklight}"
       readonly property string sysmon: "${exe pkgs.btop}"

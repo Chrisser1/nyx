@@ -7,7 +7,7 @@ expect_usage() { if "$@" >/dev/null 2>&1; then fail "$* should fail"; else [ $? 
 export HOME=$PWD/home XDG_STATE_HOME=$PWD/state XDG_RUNTIME_DIR=$PWD/run
 mkdir -p "$HOME" "$XDG_RUNTIME_DIR"
 
-for cmd in power audio kbd-backlight brightness clipboard calc calendar monitors wallpaper; do
+for cmd in power audio kbd-backlight brightness clipboard calc calendar monitors wallpaper emoji; do
   expect_usage "nyx-$cmd" bogus
 done
 expect_usage nyx-screenshot bogus
@@ -34,5 +34,18 @@ before=$(stat -c %Y "$XDG_CACHE_HOME"/nyx/wallpapers/*)
 sleep 1
 nyx-wallpaper thumbs > /dev/null
 [ "$(stat -c %Y "$XDG_CACHE_HOME"/nyx/wallpapers/*)" = "$before" ] || fail "thumbnails regenerated"
+
+# Emoji: recently used first, a skin tone counting as its base, capped at 32.
+emoji=$(nyx-emoji list)
+[ "$(jq length <<< "$emoji")" -gt 1800 ] || fail "emoji count"
+[ "$(jq -r '.[0].e' <<< "$emoji")" = "😀" ] || fail "emoji default order"
+jq -e '.[] | select(.n == "thumbs up") | (.k | index("+1")) and (.v | length == 5)' <<< "$emoji" > /dev/null || fail "emoji keywords/variants"
+nyx-emoji record 🎉
+nyx-emoji record 👍🏽
+[ "$(nyx-emoji list | jq -r '[.[:2][].e] | join(" ")')" = "👍 🎉" ] || fail "emoji recent order"
+nyx-emoji record 🎉
+[ "$(nyx-emoji list | jq -r '.[0].e')" = "🎉" ] || fail "emoji re-use moves to front"
+for e in $(nyx-emoji list | jq -r '.[100:140][].e'); do nyx-emoji record "$e"; done
+[ "$(wc -l < "$XDG_STATE_HOME/nyx/emoji-recent")" -eq 32 ] || fail "emoji recent cap"
 
 echo "all helper tests passed"

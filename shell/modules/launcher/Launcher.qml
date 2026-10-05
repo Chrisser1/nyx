@@ -119,6 +119,7 @@ Item {
       if (GlobalState.launcherMode === "wallpaper") LauncherData.refreshWallpapers();
       else if (GlobalState.launcherMode === "theme") LauncherData.refreshThemes();
       else if (GlobalState.launcherMode === "display") LauncherData.refreshMonitors();
+      else if (GlobalState.launcherMode === "emoji") LauncherData.refreshEmoji();
       root.evaluateQuery();
     }
     function onSearchQueryChanged() {
@@ -168,6 +169,17 @@ Item {
     onPressed: {
       if (Hyprland.focusedMonitor?.name === root.monitorId) {
         GlobalState.toggleLauncher({ id: Hyprland.focusedMonitor?.name, mode: "theme" })
+      }
+    }
+  }
+
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "toggleEmoji"
+    description: "Opens the launcher in emoji-picker mode"
+    onPressed: {
+      if (Hyprland.focusedMonitor?.name === root.monitorId) {
+        GlobalState.toggleLauncher({ id: Hyprland.focusedMonitor?.name, mode: "emoji" })
       }
     }
   }
@@ -277,6 +289,9 @@ Item {
         } else if (s === "theme") {
           const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/theme`, "")
           return Fuzzy.query(q, LauncherData.themeData)
+        } else if (s === "emoji") {
+          const q = GlobalState.searchQuery.replace(`${Config.menuPrefix}/emoji`, "")
+          return Fuzzy.query(q, LauncherData.emojiData)
         } else if (s === "calc") {
           return LauncherData.calcData
         } else {
@@ -306,6 +321,7 @@ Item {
           || s === "audio"
           || s === "utils"
           || s === "wallpaper"
+          || s === "emoji"
           || s === "calc"
           || s === "apps"
           || s === "") {
@@ -344,6 +360,7 @@ Item {
           preview: LauncherData.previewFor(modelData)
           palette: modelData?.palette ?? []
           swatch: LauncherData.swatchFor(modelData)
+          glyph: modelData?.glyph ?? ""
           current: LauncherData.isCurrent(modelData)
           name: modelData?.name ?? modelData?.appName ?? ""
           favorite: Config.favorites.includes(modelData?.id ?? "") ?? false

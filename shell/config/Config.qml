@@ -103,6 +103,15 @@ Singleton {
       iconId: "preferences-desktop-theme"
     },
     {
+      id: "nyx-mode-emoji",
+      name: "Emoji",
+      comment: "Search emoji and copy one to the clipboard",
+      mode: "emoji",
+      genericName: "Menu",
+      categories: ["Utility", "Text"],
+      iconId: "face-smile"
+    },
+    {
       id: "nyx-mode-power",
       name: "Power",
       comment: "Power options for system (shutdown, restart, logout etc)",

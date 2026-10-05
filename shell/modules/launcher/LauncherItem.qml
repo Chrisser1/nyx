@@ -37,12 +37,13 @@ Item {
   property bool isNotification: false
   property bool isCurrentItem: ListView.isCurrentItem
 
-  // Preview cards (wallpapers, themes) replace the icon and description.
+  // Preview cards (wallpapers, themes, emoji) replace the icon and description.
   property string preview: ""
   property var palette: []
   property string swatch: ""
   property bool current: false
-  readonly property bool hasPreview: preview !== "" || palette.length > 0 || swatch !== ""
+  property string glyph: ""
+  readonly property bool hasPreview: preview !== "" || palette.length > 0 || swatch !== "" || glyph !== ""
   implicitHeight: parent?.height ?? 0
   // height: parent?.height ?? 0
   implicitWidth: {
@@ -310,6 +311,13 @@ Item {
           source: root.preview ? `file://${root.preview}` : ""
           fillMode: Image.PreserveAspectCrop
           asynchronous: true
+        }
+
+        Text {
+          visible: root.glyph !== ""
+          anchors.centerIn: parent
+          text: root.glyph
+          font.pixelSize: Math.min(parent.width, parent.height) * 0.5
         }
 
         // base16 preview: background, foreground sample, then the eight accents.

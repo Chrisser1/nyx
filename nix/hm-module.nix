@@ -28,6 +28,7 @@
       defaultWallpaper = cfg.wallpaper.default;
       screenshotDir = cfg.screenshotDirectory;
       clipboardMaxItems = cfg.clipboard.maxItems;
+      emojiType = cfg.emoji.type;
     };
 
     shell = import ./_package {
@@ -141,6 +142,12 @@
         type = types.ints.positive;
         default = 500;
         description = "History entries kept; pins do not count.";
+      };
+
+      emoji.type = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Also type the picked emoji into the focused window, besides copying it.";
       };
 
       theme = {

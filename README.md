@@ -56,3 +56,9 @@ only sets the initial one. Rendered targets are `programs.nyx.theme.targets`.
 Up/Down to move, Enter to copy, Shift+Delete to delete, Ctrl+P to pin. Pinned
 entries survive wipes and the `programs.nyx.clipboard.maxItems` limit. nyx runs
 its own cliphist watchers, so `services.cliphist` must be off.
+
+## Emoji
+
+`nyx:toggleEmoji` searches emoji by name and CLDR keyword; Enter copies, the
+drawer holds skin tones. Recently used emoji come first. With
+`programs.nyx.emoji.type`, the pick is also typed into the focused window.

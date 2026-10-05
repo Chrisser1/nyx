@@ -18,6 +18,7 @@
       defaultWallpaper = "";
       screenshotDir = "/tmp";
       clipboardMaxItems = 500;
+      emojiType = false;
     };
 
     # Runs tests/<name>/shell.qml headless against a copy of shell/; it prints PASS.
@@ -38,7 +39,7 @@
       shell = config.packages.default;
 
       helpers = pkgs.runCommand "nyx-helpers-test" {
-        nativeBuildInputs = helpers.all;
+        nativeBuildInputs = helpers.all ++ [ pkgs.jq ];
         NYX_WALLPAPER_DIR = "${wallpapers}";
       } ''
         bash ${./_helpers/test.sh}
@@ -63,7 +64,8 @@
         setup = ''
           substituteInPlace cfg/config/Host.qml \
             --replace-fail '"nyx-theme"' '"${lib.getExe nyx.theming.theme}"' \
-            --replace-fail '"nyx-wallpaper"' '"${lib.getExe helpers.wallpaper}"'
+            --replace-fail '"nyx-wallpaper"' '"${lib.getExe helpers.wallpaper}"' \
+            --replace-fail '"nyx-emoji"' '"${lib.getExe helpers.emoji}"'
         '';
       };
 

@@ -1,9 +1,10 @@
-// Launcher theme and wallpaper modes: entries, previews and the current marker.
+// Launcher theme, wallpaper and emoji modes: entries, previews and search.
 // Saves screenshots to $OUT when set.
 import QtQuick
 import Quickshell
 import qs
 import qs.services
+import qs.utils
 import qs.modules.launcher
 
 ShellRoot {
@@ -54,6 +55,18 @@ ShellRoot {
         && LauncherData.wallpaperData.every(d => LauncherData.previewFor(d.entry) !== ""),
       act: () => root.shot("wallpaper") },
     { what: "wallpaper screenshot", settle: 5, ready: () => true,
+      act: () => GlobalState.launcherMode = "emoji" },
+    { what: "emoji loaded", settle: 5, ready: () => LauncherData.emojiEntries.length > 1800,
+      act: () => {
+        const thumbs = Fuzzy.query("thumbs up", LauncherData.emojiData)[0];
+        if (thumbs?.glyph !== "👍") root.fail(`emoji search: ${thumbs?.name}`);
+        if (thumbs.actions.length !== 5) root.fail("emoji skin tones");
+        if (Fuzzy.query("+1", LauncherData.emojiData)[0]?.glyph !== "👍") root.fail("emoji keyword search");
+        GlobalState.searchQuery = "heart";
+      } },
+    { what: "emoji search", settle: 5, ready: () => true,
+      act: () => root.shot("emoji") },
+    { what: "emoji screenshot", settle: 5, ready: () => true,
       act: () => { console.log("PASS"); Qt.exit(0); } }
   ]
 
