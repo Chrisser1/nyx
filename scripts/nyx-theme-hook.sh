@@ -10,8 +10,9 @@ case "${1:-}" in
     [ $# -ge 2 ] || usage
     theme=adw-gtk3
     if [ "$2" = dark ]; then theme=adw-gtk3-dark; fi
-    gsettings set org.gnome.desktop.interface color-scheme "prefer-$2" 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface gtk-theme "$theme" 2>/dev/null || true ;;
+    # dconf, not gsettings: it needs no compiled schemas.
+    dconf write /org/gnome/desktop/interface/color-scheme "'prefer-$2'" 2>/dev/null || true
+    dconf write /org/gnome/desktop/interface/gtk-theme "'$theme'" 2>/dev/null || true ;;
   btop)
     conf="${XDG_CONFIG_HOME:-$HOME/.config}/btop/btop.conf"
     if [ -f "$conf" ] && grep -q '^color_theme' "$conf"; then
