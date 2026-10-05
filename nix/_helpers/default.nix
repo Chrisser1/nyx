@@ -48,10 +48,13 @@ in rec {
   power = script "power" [ pkgs.systemd hyprland ] { NYX_LOCK_COMMAND = lockCommand; };
   screenshot = script "screenshot" (with pkgs; [ grim slurp satty jq wl-clipboard hyprland ]) { NYX_SCREENSHOT_DIR = screenshotDir; };
   colorpicker = script "colorpicker" (with pkgs; [ hyprpicker libnotify ]) { };
-  audio = script "audio" [ pkgs.wireplumber ] { };
+  audio = script "audio" (with pkgs; [ wireplumber pipewire jq coreutils ]) { };
   kbdBacklight = script "kbd-backlight" [ pkgs.brightnessctl hyprland ] { };
   brightness = script "brightness" [ pkgs.brightnessctl hyprland ] { };
-  clipboard = script "clipboard" (with pkgs; [ cliphist wl-clipboard jq gawk gnugrep coreutils findutils diffutils ]) { NYX_CLIPBOARD_MAX_ITEMS = toString clipboardMaxItems; };
+  clipboard = script "clipboard" (with pkgs; [ cliphist wl-clipboard jq gawk gnugrep coreutils findutils diffutils ]) {
+    NYX_CLIPBOARD_MAX_ITEMS = toString clipboardMaxItems;
+    NYX_BITWARDEN = lib.getExe bitwarden;
+  };
   calc = script "calc" (with pkgs; [ libqalculate wl-clipboard ]) { NYX_QALC_CONFIG = "${qalcConfig}"; };
   calendar = script "calendar" (with pkgs; [ calendarBackend evolution gnome-calendar ]) { };
   monitors = script "monitors" (with pkgs; [ jq libnotify wdisplays hyprland ]) { };

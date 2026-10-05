@@ -1,5 +1,6 @@
 // A few bouncing columns summarising the cava bars (0..1 each): the bars are
-// split into `count` groups and each column shows its group's average.
+// split into `count` groups and each column shows its group's loudest bar, so a
+// single peak still moves it.
 
 import qs.config
 import QtQuick
@@ -22,9 +23,9 @@ Item {
     if (n === 0) return 0
     const from = Math.floor(index * n / root.count)
     const to = Math.max(from + 1, Math.floor((index + 1) * n / root.count))
-    let sum = 0
-    for (let i = from; i < to; i++) sum += root.bars[i]
-    return Math.min(1, sum / (to - from))
+    let peak = 0
+    for (let i = from; i < to; i++) peak = Math.max(peak, root.bars[i])
+    return Math.min(1, peak)
   }
 
   Repeater {

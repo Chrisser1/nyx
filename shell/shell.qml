@@ -19,6 +19,7 @@ import qs.modules.launcher
 import qs.modules.calendar
 import qs.modules.clipboard
 import qs.modules.bitwarden
+import qs.modules.mirror
 import qs.modules.docker
 import qs.modules.audio
 import qs.modules.network
@@ -66,6 +67,13 @@ ShellRoot {
     name: "toggleDocker"
     description: "Toggles the Docker containers panel"
     onPressed: GlobalState.toggleDocker(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
+  }
+
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "toggleMirror"
+    description: "Toggles the mirror displays panel"
+    onPressed: GlobalState.toggleMirror(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
   }
 
   GlobalShortcut { // qmllint disable unresolved-type
@@ -296,6 +304,10 @@ ShellRoot {
         }
 
         WindowSwitcherPanel {
+          monitorId: scope.monitorId
+        }
+
+        MirrorPanel {
           monitorId: scope.monitorId
         }
 

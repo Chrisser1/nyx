@@ -36,7 +36,35 @@ def registry():
         die(f"cannot reach Evolution Data Server ({e.message})")
 
 
+def google_path(user, path):
+    """The path Google's CalDAV endpoint serves for `user`, or None if `path` is right.
+
+    Evolution's Google sign-in has saved a placeholder address in the path, which
+    Google answers with 404, so the path is checked against the account's own.
+    """
+    want = f"/caldav/v2/{user}/events"
+    if path.startswith("/caldav/v2/") and path != want:
+        return want
+    return None
+
+
+def repair_google(reg):
+    for source in reg.list_sources(EDataServer.SOURCE_EXTENSION_AUTHENTICATION):
+        auth = source.get_extension(EDataServer.SOURCE_EXTENSION_AUTHENTICATION)
+        if auth.get_method() != "Google" or not auth.get_user():
+            continue
+        dav = source.get_extension(EDataServer.SOURCE_EXTENSION_WEBDAV_BACKEND)
+        fixed = google_path(auth.get_user(), dav.get_resource_path() or "")
+        if fixed:
+            dav.set_resource_path(fixed)
+            try:
+                source.write_sync(None)
+            except GLib.Error as e:
+                print(f"nyx-calendar: could not repair {source.get_display_name()}: {e.message}", file=sys.stderr)
+
+
 def calendars(reg):
+    repair_google(reg)
     return [
         s
         for s in reg.list_sources(EDataServer.SOURCE_EXTENSION_CALENDAR)
@@ -274,11 +302,13 @@ def main():
         cmd_add_caldav(*args[1:])
     elif args[:1] == ["caldav-config"] and len(args) == 4:
         cmd_caldav_config(*args[1:])
+    elif args[:1] == ["google-path"] and len(args) == 3:
+        print(google_path(args[1], args[2]) or "")
     elif args[:1] == ["calendars"]:
         cmd_calendars()
     else:
         print(
-            "usage: nyx-calendar-backend {events <start> <end>|add <text>|add-caldav <name> <url> <user>|caldav-config <name> <url> <user>|calendars}",
+            "usage: nyx-calendar-backend {events <start> <end>|add <text>|add-caldav <name> <url> <user>|caldav-config <name> <url> <user>|google-path <user> <path>|calendars}",
             file=sys.stderr,
         )
         raise SystemExit(2)

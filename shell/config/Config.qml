@@ -103,6 +103,15 @@ Singleton {
       iconId: "preferences-desktop-theme"
     },
     {
+      id: "nyx-mode-mirror",
+      name: "Mirror displays",
+      comment: "Show one output's picture on another, or stop mirroring",
+      panel: "mirror",
+      genericName: "Menu",
+      categories: ["Display", "Utility"],
+      iconId: "preferences-desktop-remote-desktop"
+    },
+    {
       id: "nyx-mode-bitwarden",
       name: "Bitwarden",
       comment: "Copy or type passwords, usernames and TOTP codes from the vault",

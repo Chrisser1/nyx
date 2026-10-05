@@ -83,12 +83,49 @@ Singleton {
   function isAudio(n) { return (n.type & PwNodeType.Audio) !== 0 }
   function isPlumbing(n) { return /^(capture|effect_|cava)/.test(n.name ?? "") }
   property var sinks: pwNodes.filter(n => root.isAudio(n) && !n.isStream && n.isSink && !root.isPlumbing(n))
-  property var sources: pwNodes.filter(n => root.isAudio(n) && !n.isStream && !n.isSink && !root.isPlumbing(n))
+  property var sources: pwNodes.filter(n => root.isAudio(n) && !n.isStream && !n.isSink && !root.isPlumbing(n) && root.isMic(n))
   property var appStreams: pwNodes.filter(n => root.isAudio(n) && n.isStream && n.isSink && !root.isPlumbing(n))
 
   PwObjectTracker {
     objects: [...root.sinks, ...root.sources, ...root.appStreams]
   }
+
+  // The noise cancelling source (modules/features/system/noise-cancellation.nix)
+  // is a filter on a real microphone. Inputs lists real microphones only, and
+  // `chainMic`, the one the chain listens to, is stored by `nyx-audio chain`.
+  property var noiseNode: pwNodes.find(n => n.name === "rnnoise_source") ?? null
+  property bool noiseOn: root.noiseNode !== null && root.source?.name === root.noiseNode.name
+  property string chainMic: ""
+
+  function isMic(n) { return n.name !== "rnnoise_source" }
+
+  // Picking a microphone also points the chain at it; the default stays the chain while it is on.
+  function pickMic(n) {
+    root.chainMic = n.name
+    Quickshell.execDetached([Host.audio, "chain", "set", n.name])
+    root.setDefaultSource(root.noiseOn ? root.noiseNode : n)
+  }
+
+  function setNoiseCancelling(on) {
+    const current = root.source && root.isMic(root.source) ? root.source : root.sources[0]
+    const mic = root.sources.find(n => n.name === root.chainMic) ?? current
+    if (on && root.noiseNode) {
+      if (mic) root.pickMic(mic)
+      root.setDefaultSource(root.noiseNode)
+    } else if (mic) {
+      root.setDefaultSource(mic)
+    }
+  }
+
+  Process {
+    command: [Host.audio, "chain"]
+    running: true
+    stdout: StdioCollector { onStreamFinished: if (root.chainMic === "") root.chainMic = text.trim() }
+  }
+
+  // The chain's target is lost when PipeWire restarts, so it is set again
+  // whenever the chain node shows up.
+  onNoiseNodeChanged: if (root.noiseNode) Quickshell.execDetached([Host.audio, "chain", "apply"])
 
   function deviceLabel(n) { return n?.nickname || n?.description || n?.name || "" }
   function appLabel(n) {
@@ -163,10 +200,11 @@ Singleton {
     stdout: SplitParser {
       splitMarker: "\n"
       onRead: data => {
-        // data is like "42;78;13;99;50;..."
+        // data is like "42;78;13;99;50;...", levels 0..100. The square root lifts quiet
+        // passages, which would otherwise barely register.
         root.bars = data.split(";")
         .filter(s => s.length > 0)
-        .map(s => parseInt(s) / 100.0)
+        .map(s => Math.sqrt(parseInt(s) / 100.0))
       }
     }
   }

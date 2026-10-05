@@ -38,117 +38,96 @@ Singleton {
   // name, description, mode, position, scale, enabled|disabled, mirrorOf, focused).
   // Each card carries per-monitor actions in its drawer; the static arrange/save
   // entries from Config are appended at the end.
-  property list<var> monitorEntries: []
+  property list<var> monitorEntries: root.monitorCards(MonitorData.rows)
   property list<var> displayData: {
     const live = monitorEntries.map(a => ({ name: Fuzzy.prepare(a.name), entry: a }));
     const statics = Config.displayLayouts.map(a => ({ name: Fuzzy.prepare(a.name), entry: a }));
     return [...live, ...statics];
   }
 
-  function refreshMonitors() { monProc.running = true }
+  function refreshMonitors() { MonitorData.refresh() }
 
-  Process {
-    id: monProc
-    command: [Host.monitors, "list"]
-    running: false
-    stderr: StdioCollector { id: monErr }
-    onExited: code => { if (code !== 0) console.warn(`nyx: monitor list failed: ${monErr.text.trim()}`) }
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const rows = [];
-        for (const line of this.text.split("\n")) {
-          if (!line.length) continue;
-          const f = line.split("\t");
-          if (f.length < 8) continue;
-          rows.push({
-            name: f[0], desc: f[1], mode: f[2], pos: f[3],
-            scale: f[4], enabled: f[5] === "enabled",
-            mirrorOf: f[6], focused: f[7] === "focused"
-          });
-        }
+  function monitorCards(rows) {
+    const out = [];
+    for (const m of rows) {
+      const actions = [{
+        id: `mon-toggle-${m.name}`,
+        name: m.enabled ? "Disable" : "Enable",
+        icon: "",
+        execString: `${Host.monitors} toggle ${m.name}`,
+        command: [Host.monitors, "toggle", m.name]
+      }];
 
-        const out = [];
-        for (const m of rows) {
-          const actions = [{
-            id: `mon-toggle-${m.name}`,
-            name: m.enabled ? "Disable" : "Enable",
-            icon: "",
-            execString: `${Host.monitors} toggle ${m.name}`,
-            command: [Host.monitors, "toggle", m.name]
-          }];
+      if (m.mirrorOf !== "none") {
+        actions.push({
+          id: `mon-unmirror-${m.name}`,
+          name: `Stop mirroring ${m.mirrorOf}`,
+          icon: "",
+          execString: `${Host.monitors} unmirror ${m.name}`,
+          command: [Host.monitors, "unmirror", m.name]
+        });
+      }
 
-          if (m.mirrorOf !== "none") {
-            actions.push({
-              id: `mon-unmirror-${m.name}`,
-              name: `Stop mirroring ${m.mirrorOf}`,
-              icon: "",
-              execString: `${Host.monitors} unmirror ${m.name}`,
-              command: [Host.monitors, "unmirror", m.name]
-            });
-          }
+      // Mirror any *other* output onto this one.
+      for (const src of rows) {
+        if (src.name === m.name || !src.enabled) continue;
+        actions.push({
+          id: `mon-mirror-${src.name}-${m.name}`,
+          name: `Show ${src.name} here`,
+          icon: "",
+          execString: `${Host.monitors} mirror ${src.name} ${m.name}`,
+          command: [Host.monitors, "mirror", src.name, m.name]
+        });
+      }
 
-          // Mirror any *other* output onto this one.
-          for (const src of rows) {
-            if (src.name === m.name || !src.enabled) continue;
-            actions.push({
-              id: `mon-mirror-${src.name}-${m.name}`,
-              name: `Show ${src.name} here`,
-              icon: "",
-              execString: `${Host.monitors} mirror ${src.name} ${m.name}`,
-              command: [Host.monitors, "mirror", src.name, m.name]
-            });
-          }
+      const state = [];
+      if (!m.enabled) state.push("disabled");
+      if (m.mirrorOf !== "none") state.push(`mirroring ${m.mirrorOf}`);
+      if (m.focused) state.push("focused");
 
-          const state = [];
-          if (!m.enabled) state.push("disabled");
-          if (m.mirrorOf !== "none") state.push(`mirroring ${m.mirrorOf}`);
-          if (m.focused) state.push("focused");
+      out.push({
+        id: `nyx-monitor-${m.name}`,
+        name: m.name,
+        comment: `${m.desc} — ${m.mode} at ${m.pos}${state.length ? " (" + state.join(", ") + ")" : ""}`,
+        genericName: "Monitor",
+        categories: ["Display", m.enabled ? "Enabled" : "Disabled"],
+        iconId: m.enabled ? "video-display" : "preferences-desktop-display",
+        // Enter on the card toggles; the drawer holds mirroring.
+        command: [Host.monitors, "toggle", m.name],
+        script: [Host.monitors, "toggle", m.name],
+        actions: actions
+      });
+    }
 
-          out.push({
-            id: `nyx-monitor-${m.name}`,
-            name: m.name,
-            comment: `${m.desc} — ${m.mode} at ${m.pos}${state.length ? " (" + state.join(", ") + ")" : ""}`,
-            genericName: "Monitor",
-            categories: ["Display", m.enabled ? "Enabled" : "Disabled"],
-            iconId: m.enabled ? "video-display" : "preferences-desktop-display",
-            // Enter on the card toggles; the drawer holds mirroring.
-            command: [Host.monitors, "toggle", m.name],
-            script: [Host.monitors, "toggle", m.name],
-            actions: actions
-          });
-        }
-
-        // Mirroring gets top-level cards too: one per source and target, or one
-        // to stop an active mirror.
-        for (const dst of rows) {
-          if (dst.mirrorOf !== "none") {
-            out.push({
-              id: `nyx-unmirror-${dst.name}`,
-              name: `Stop mirroring on ${dst.name}`,
-              comment: `${dst.name} shows ${dst.mirrorOf}`,
-              genericName: "Mirror",
-              categories: ["Display", "Mirror"],
-              iconId: "preferences-desktop-remote-desktop",
-              script: [Host.monitors, "unmirror", dst.name]
-            });
-            continue;
-          }
-          for (const src of rows) {
-            if (src.name === dst.name || !src.enabled || src.mirrorOf !== "none") continue;
-            out.push({
-              id: `nyx-mirror-${src.name}-${dst.name}`,
-              name: `Mirror ${src.name} onto ${dst.name}`,
-              comment: `${dst.name} will show what ${src.name} shows`,
-              genericName: "Mirror",
-              categories: ["Display", "Mirror"],
-              iconId: "preferences-desktop-remote-desktop",
-              script: [Host.monitors, "mirror", src.name, dst.name]
-            });
-          }
-        }
-        root.monitorEntries = out;
+    // Mirroring gets top-level cards too: one per source and target, or one
+    // to stop an active mirror.
+    for (const dst of rows) {
+      if (dst.mirrorOf !== "none") {
+        out.push({
+          id: `nyx-unmirror-${dst.name}`,
+          name: `Stop mirroring on ${dst.name}`,
+          comment: `${dst.name} shows ${dst.mirrorOf}`,
+          genericName: "Mirror",
+          categories: ["Display", "Mirror"],
+          iconId: "preferences-desktop-remote-desktop",
+          script: [Host.monitors, "unmirror", dst.name]
+        });
+        continue;
+      }
+      for (const src of rows) {
+        if (src.name === dst.name || !src.enabled || src.mirrorOf !== "none") continue;
+        out.push({
+          id: `nyx-mirror-${src.name}-${dst.name}`,
+          name: `Mirror ${src.name} onto ${dst.name}`,
+          comment: `${dst.name} will show what ${src.name} shows`,
+          genericName: "Mirror",
+          categories: ["Display", "Mirror"],
+          iconId: "preferences-desktop-remote-desktop",
+          script: [Host.monitors, "mirror", src.name, dst.name]
+        });
       }
     }
+    return out;
   }
 
   property list<var> powerData: {

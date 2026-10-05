@@ -3,6 +3,8 @@
 STATE="${XDG_STATE_HOME:-$HOME/.local/state}/nyx/clipboard"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/nyx/clipboard"
 SEEN="$STATE/seen.tsv"
+# Written by nyx-bitwarden: what it last copied (time, id, field, name), never the secret.
+VAULT="$STATE/vault"
 PINS="$STATE/pins"
 mkdir -p "$PINS" "$CACHE"
 [ -e "$SEEN" ] || touch "$SEEN"
@@ -67,7 +69,7 @@ case "${1:-}" in
     history=$(cliphist list 2>/dev/null || true)
     pinned=$(pins)
     prune "$(printf '%s\n%s\n' "$history" "$pinned" | cut -f 1)"
-    jq -n --arg history "$history" --arg pins "$pinned" --rawfile seen "$SEEN" '
+    jq -n --arg history "$history" --arg pins "$pinned" --arg vault "$(cat "$VAULT" 2>/dev/null || true)" --rawfile seen "$SEEN" '
       def rows: split("\n") | map(select(length > 0) | split("\t"));
       def entry($id; $preview; $time; $pinned):
         ([$preview | capture("^\\[\\[ binary data (?<size>.+) (?<format>[a-z0-9]+) (?<width>[0-9]+)x(?<height>[0-9]+) \\]\\]$")] | .[0]) as $img
@@ -77,12 +79,14 @@ case "${1:-}" in
                 width: ($img.width | tonumber), height: ($img.height | tonumber) }
             else { kind: "text" } end;
       ($seen | rows | map({ (.[0]): (.[1] | tonumber) }) | add // {}) as $times
+      | (if $vault == "" then [] else ($vault | split("\t")) as $v | [{ id: "vault", pinned: false, kind: "text", time: ($v[0] | tonumber), preview: "Bitwarden: \($v[3]) (\($v[2]))" }] end) as $vault_row
       | [($pins | rows[] | entry(.[0]; .[2:] | join("\t"); .[1] | tonumber; true)),
+         $vault_row[],
          ($history | rows[] | entry(.[0]; .[1:] | join("\t"); $times[.[0]]; false))]' ;;
 
   text)
     need_id $#
-    decode "$2" ;;
+    if [ "$2" = vault ]; then echo "Copied from Bitwarden. The secret is not kept here."; else decode "$2"; fi ;;
 
   image)
     need_id $#
@@ -95,10 +99,20 @@ case "${1:-}" in
 
   copy)
     need_id $#
-    decode "$2" | wl-copy ;;
+    if [ "$2" = vault ]; then
+      # Fetched from the vault again, so it has to be unlocked.
+      IFS=$'\t' read -r _ id field label < "$VAULT" || { echo "nyx-clipboard: nothing from Bitwarden" >&2; exit 1; }
+      "$NYX_BITWARDEN" copy "$id" "$field" "$label"
+    else
+      decode "$2" | wl-copy
+    fi ;;
 
   delete)
     need_id $#
+    if [ "$2" = vault ]; then
+      rm -f "$VAULT"
+      exit 0
+    fi
     if is_pin "$2"; then
       file=$(pin_file "$2")
       rm -f "$file" "${file%.data}.preview"

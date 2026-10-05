@@ -27,12 +27,13 @@ ShellRoot {
       } },
     { what: "cava frames parsed", ready: () => AudioData.bars.length === 4,
       act: () => {
-        if (AudioData.bars.join() !== "0,0.5,1,0.2") root.fail(`bars: ${AudioData.bars}`);
+        const want = [0, Math.sqrt(0.5), 1, Math.sqrt(0.2)];
+        if (AudioData.bars.some((b, i) => Math.abs(b - want[i]) > 0.001)) root.fail(`bars: ${AudioData.bars}`);
       } },
     { what: "sounding", settle: 5, ready: () => AudioData.sounding && visual.opacity === 1,
       act: () => {
         if (!(eq.level(1) > eq.level(0))) root.fail(`levels: ${eq.level(0)} ${eq.level(1)}`);
-        if (Math.abs(eq.level(0) - 0.25) > 0.001 || Math.abs(eq.level(1) - 0.6) > 0.001) root.fail("column levels are group averages");
+        if (Math.abs(eq.level(0) - Math.sqrt(0.5)) > 0.001 || eq.level(1) !== 1) root.fail("column levels are the group peaks");
         if (Quickshell.env("OUT")) row.grabToImage(r => r.saveToFile(`${Quickshell.env("OUT")}/equalizer.png`));
         GlobalState.mediaOpen = false;
       } },

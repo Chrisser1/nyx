@@ -53,7 +53,7 @@ Singleton {
     return [...found.filter(e => root.suggested(e)), ...found.filter(e => !root.suggested(e))];
   }
 
-  function copy(entry, field) { Quickshell.execDetached([Host.bitwarden, "copy", entry.id, field]); }
+  function copy(entry, field) { Quickshell.execDetached([Host.bitwarden, "copy", entry.id, field, entry.name]); }
   function type(entry, field) { Quickshell.execDetached([Host.bitwarden, "type", entry.id, field]); }
   function sync() { Quickshell.execDetached([Host.bitwarden, "sync"]); }
 

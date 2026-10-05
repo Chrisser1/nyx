@@ -3,7 +3,8 @@ set -euo pipefail
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
-export STUB_DIR=$PWD/stub XDG_DATA_HOME=$PWD/data
+export STUB_DIR=$PWD/stub XDG_DATA_HOME=$PWD/data XDG_STATE_HOME=$PWD/state
+marker=$XDG_STATE_HOME/nyx/clipboard/vault
 mkdir -p "$STUB_DIR/secrets"
 cat > "$STUB_DIR/list.json" <<'JSON'
 [
@@ -68,7 +69,8 @@ l=$(nyx-bitwarden list)
 
 nyx-bitwarden copy u1 password
 [ "$(cat "$STUB_DIR/clip")" = hunter2 ] && [ -f "$STUB_DIR/sensitive" ] || fail "password copied as sensitive"
-nyx-bitwarden copy u1 username
+nyx-bitwarden copy u1 username GitHub
+[ "$(cut -f 2- "$marker")" = "$(printf 'u1\tusername\tGitHub')" ] || fail "vault copy recorded: $(cat "$marker")"
 [ "$(cat "$STUB_DIR/clip")" = chris ] || fail "username"
 nyx-bitwarden copy u1 totp
 [ "$(cat "$STUB_DIR/clip")" = 123456 ] || fail "totp"
@@ -92,6 +94,7 @@ grep -q "Could not read the totp" "$STUB_DIR/notifications" || fail "failure not
 nyx-bitwarden copy u1 password
 sleep 2
 [ ! -e "$STUB_DIR/clip" ] || fail "secret not cleared"
+[ ! -e "$marker" ] || fail "vault copy row outlived the secret"
 nyx-bitwarden copy u1 password
 printf 'other' | wl-copy
 sleep 2

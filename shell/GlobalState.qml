@@ -34,6 +34,8 @@ Singleton {
   property string switcherMonitorId: ""
   property bool dockerOpen: false
   property string dockerMonitorId: ""
+  property bool mirrorOpen: false
+  property string mirrorMonitorId: ""
   property bool bitwardenOpen: false
   property string bitwardenMonitorId: ""
   property bool tailnetOpen: false
@@ -44,7 +46,7 @@ Singleton {
   property real mediaAnchorX: 0
   property bool overlayOpen: root.launcherOpen || root.trayMenuOpen || root.calendarOpen
     || root.audioOpen || root.wifiOpen || root.sysOpen || root.mediaOpen || root.clipboardOpen
-    || root.switcherOpen || root.dockerOpen || root.tailnetOpen || root.bitwardenOpen
+    || root.switcherOpen || root.dockerOpen || root.tailnetOpen || root.bitwardenOpen || root.mirrorOpen
   property QsMenuHandle activeMenu: null
   property bool trayMenuOpen: false
   property int menuDirection: Qt.LeftToRight
@@ -265,6 +267,21 @@ Singleton {
     else openBitwarden(id)
   }
 
+  function openMirror(id = Config.primaryDisplay) {
+    root.closeAll()
+    root.mirrorMonitorId = id
+    root.mirrorOpen = true
+  }
+
+  function closeMirror() {
+    root.mirrorOpen = false
+  }
+
+  function toggleMirror(id = Config.primaryDisplay) {
+    if (root.mirrorOpen && root.mirrorMonitorId === id) closeMirror()
+    else openMirror(id)
+  }
+
   function openTailnet(id = Config.primaryDisplay) {
     root.closeAll()
     root.tailnetMonitorId = id
@@ -298,6 +315,7 @@ Singleton {
       || (root.switcherOpen && root.switcherMonitorId === id)
       || (root.dockerOpen && root.dockerMonitorId === id)
       || (root.bitwardenOpen && root.bitwardenMonitorId === id)
+      || (root.mirrorOpen && root.mirrorMonitorId === id)
       || (root.tailnetOpen && root.tailnetMonitorId === id)
   }
 
@@ -323,6 +341,7 @@ Singleton {
     root.closeSwitcher()
     root.closeDocker()
     root.closeBitwarden()
+    root.closeMirror()
     root.closeTailnet()
     if (root.trayMenuOpen) root.closeTrayMenu()
     if (root.launcherOpen) root.closeLauncher()

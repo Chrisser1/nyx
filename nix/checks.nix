@@ -28,6 +28,7 @@
     dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ] { };
     tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ] { };
     monitorsStubbed = stubbed "monitors" [ (stub "hyprctl") (stub "notify-send") pkgs.jq pkgs.coreutils ] { };
+    audioStubbed = stubbed "audio" [ (stub "pw-dump") (stub "pw-metadata") pkgs.wireplumber pkgs.jq pkgs.coreutils ] { };
     calendarStubbed = stubbed "calendar" [ (stub "nyx-calendar-backend") (stub "evolution") ] { };
     # The default keybinds as Lua and as the shell's JSON.
     keybindsRendered =
@@ -40,6 +41,11 @@
         lua = pkgs.writeText "keybinds.lua" (kb.lua args);
         json = pkgs.writeText "keybinds.json" (kb.json args);
       };
+    # The real clipboard helper with a nyx-bitwarden that only logs its arguments.
+    clipboardStubbed = stubbed "clipboard" (with pkgs; [ cliphist wl-clipboard jq gawk gnugrep coreutils findutils diffutils ]) {
+      NYX_CLIPBOARD_MAX_ITEMS = "500";
+      NYX_BITWARDEN = pkgs.writeShellScript "fake-bitwarden" "echo \"$@\" >> \"$BW_CALLS\"";
+    };
     # Prints one frame every 100 ms, like cava with four raw ascii bars.
     fakeCava = pkgs.writeShellScript "fake-cava" "while :; do echo \"0;50;100;20\"; sleep 0.1; done";
     bitwardenStubbed = stubbed "bitwarden" (map stub [ "rbw" "wl-copy" "wl-paste" "notify-send" "wtype" ] ++ [ pkgs.jq pkgs.coreutils pkgs.findutils pkgs.gnugrep ]) { NYX_BITWARDEN_CLEAR = "1"; NYX_BITWARDEN_PINENTRY = "/stub/pinentry"; NYX_BITWARDEN_TYPE_DELAY = "0"; };
@@ -100,6 +106,17 @@
           mkdir -p $STUB_DIR
           cp --no-preserve=mode ${../tests/displays/monitors.json} $STUB_DIR/monitors.json
           cp --no-preserve=mode ${../tests/displays/mirrored.json} $STUB_DIR/mirrored.json
+          substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-monitors"' '"${lib.getExe monitorsStubbed}"'
+        '';
+      };
+
+      mirror-panel = qmlTest "mirror" {
+        setup = ''
+          export STUB_DIR=$PWD/stub
+          mkdir -p $STUB_DIR
+          cp --no-preserve=mode ${../tests/displays/monitors.json} $STUB_DIR/monitors.json
+          cp --no-preserve=mode ${../tests/displays/mirrored.json} $STUB_DIR/mirrored.json
+          touch $STUB_DIR/evals
           substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-monitors"' '"${lib.getExe monitorsStubbed}"'
         '';
       };
@@ -179,13 +196,24 @@
         grep -qxF 'Method=none' <<< "$plain" || { echo "FAIL: plain http is not secured"; exit 1; }
         if nyx-calendar-backend caldav-config Bad ftp://nas/dav me 2>/dev/null; then echo "FAIL: ftp accepted"; exit 1; fi
         if nyx-calendar-backend caldav-config Bad nas/dav me 2>/dev/null; then echo "FAIL: schemeless address accepted"; exit 1; fi
+        # Evolution's Google sign-in has saved another address in the path: 404.
+        [ "$(nyx-calendar-backend google-path me@gmail.com /caldav/v2/chris@gmail.com/events)" = /caldav/v2/me@gmail.com/events ] || { echo "FAIL: google path not corrected"; exit 1; }
+        [ -z "$(nyx-calendar-backend google-path me@gmail.com /caldav/v2/me@gmail.com/events)" ] || { echo "FAIL: correct google path changed"; exit 1; }
+        [ -z "$(nyx-calendar-backend google-path me /remote.php/dav/calendars/me/personal/)" ] || { echo "FAIL: non-google path changed"; exit 1; }
         touch $out
       '';
 
       clipboard = pkgs.runCommand "nyx-clipboard-test" {
-        nativeBuildInputs = [ helpers.clipboard pkgs.imagemagick pkgs.jq ];
+        nativeBuildInputs = [ clipboardStubbed pkgs.imagemagick pkgs.jq ];
       } ''
         bash ${./_helpers/clipboard-test.sh}
+        touch $out
+      '';
+
+      audio = pkgs.runCommand "nyx-audio-test" {
+        nativeBuildInputs = [ audioStubbed pkgs.jq ];
+      } ''
+        bash ${./_helpers/audio-test.sh}
         touch $out
       '';
 

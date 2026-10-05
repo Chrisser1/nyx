@@ -274,6 +274,9 @@
       xdg.configFile."cava/nyx.ini".text = ''
         [general]
         bars = 48
+        # The range music fills; the default spreads bars to 20 kHz.
+        lower_cutoff_freq = 50
+        higher_cutoff_freq = 12000
 
         [output]
         method = raw

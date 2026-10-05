@@ -56,6 +56,18 @@ nyx-clipboard delete "$(list | jq -r '.[0].id')"
 [ "$(list)" = "[]" ] || fail "delete"
 [ ! -s "$XDG_STATE_HOME/nyx/clipboard/seen.tsv" ] || fail "stale times kept"
 
+# What nyx-bitwarden copied shows as a row without the secret, and copies again from the vault.
+export BW_CALLS=$PWD/bw-calls
+printf '%s\t%s\t%s\t%s\n' 1700000000 u1 password GitHub > "$XDG_STATE_HOME/nyx/clipboard/vault"
+[ "$(list | jq -c '.[0] | [.id, .kind, .pinned, .time, .preview]')" = '["vault","text",false,1700000000,"Bitwarden: GitHub (password)"]' ] || fail "vault row: $(list)"
+nyx-clipboard text vault | grep -q "not kept" || fail "vault text"
+nyx-clipboard copy vault
+[ "$(cat "$BW_CALLS")" = "copy u1 password GitHub" ] || fail "vault copy: $(cat "$BW_CALLS")"
+expect_status 1 nyx-clipboard pin vault
+nyx-clipboard delete vault
+[ "$(list)" = "[]" ] || fail "vault row deleted"
+expect_status 1 nyx-clipboard copy vault
+
 # A history larger than a pipe buffer still records arrival times.
 for i in $(seq 700); do printf "entry %04d %0120d" "$i" 0 | nyx-clipboard store; done
 [ "$(list | jq "map(select(.time == null)) | length")" = 0 ] || fail "times missing in a large history"

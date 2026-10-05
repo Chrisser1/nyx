@@ -1,9 +1,11 @@
 # Bitwarden through rbw. Secrets are copied as sensitive, so clipboard history
 # skips them, and cleared after NYX_BITWARDEN_CLEAR seconds (0 keeps them).
 usage() {
-  echo "usage: nyx-bitwarden {list|setup <email> <com|eu|url>|unlock|lock|sync|copy <id> password|username|totp|notes|type <id> password|username|totp}" >&2
+  echo "usage: nyx-bitwarden {list|setup <email> <com|eu|url>|unlock|lock|sync|copy <id> password|username|totp|notes [label]|type <id> password|username|totp}" >&2
   exit 2
 }
+
+VAULT_COPY="${XDG_STATE_HOME:-$HOME/.local/state}/nyx/clipboard/vault"
 
 notify() { notify-send -a nyx -i dialog-password "Bitwarden" "$1" || true; }
 
@@ -83,10 +85,14 @@ case "${1:-}" in
     [ $# -ge 3 ] || usage
     secret=$(read_secret "$2" "$3") || exit $?
     printf '%s' "$secret" | wl-copy --sensitive
+    # The history never holds the secret, only a row saying what was copied.
+    mkdir -p "$(dirname "$VAULT_COPY")"
+    printf '%s\t%s\t%s\t%s\n' "$(date +%s)" "$2" "$3" "${4:-$2}" > "$VAULT_COPY"
     if [ "$NYX_BITWARDEN_CLEAR" -gt 0 ]; then
       # Detached, so callers do not wait; only clears if still ours.
       (
         sleep "$NYX_BITWARDEN_CLEAR"
+        rm -f "$VAULT_COPY"
         [ "$(wl-paste --no-newline 2>/dev/null)" != "$secret" ] || wl-copy --clear
       ) < /dev/null > /dev/null 2>&1 &
     fi ;;

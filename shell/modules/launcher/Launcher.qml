@@ -321,6 +321,10 @@ Item {
           Notifications.attemptInvokeAction(entry.notificationId, "default")
           GlobalState.closeLauncher()
         } else if (s === "menu") {
+          if (entry.panel === "mirror") {
+            GlobalState.openMirror(root.monitorId)
+            return
+          }
           if (entry.panel === "bitwarden") {
             VaultData.hint = ""
             GlobalState.openBitwarden(root.monitorId)

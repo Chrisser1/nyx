@@ -125,17 +125,19 @@ Item {
       Layout.leftMargin: Style.spacing.p1
       Layout.rightMargin: Style.spacing.p1
       value: device.node.audio?.volume ?? 0
-      onMoved: v => device.node.audio.volume = v
+      onVolumeSet: v => device.node.audio.volume = v
     }
   }
 
   component VolumeSlider: Slider {
     id: slider
-    signal moved(real v)
+    objectName: "volume"
+    // Not `moved`: redeclaring Slider's own signal leaves drags unhandled.
+    signal volumeSet(real v)
     from: 0
     to: 1
     implicitHeight: Style.spacing.p4
-    onMoved: slider.moved(slider.value)
+    onMoved: slider.volumeSet(slider.value)
 
     HoverHandler { cursorShape: Qt.PointingHandCursor }
 
@@ -219,13 +221,57 @@ Item {
         }
 
         SectionTitle { text: "Input" }
+        // The chain is a filter: this switches it on or off for whichever
+        // microphone is picked below.
+        Rectangle {
+          objectName: "noise"
+          visible: AudioData.noiseNode !== null
+          Layout.fillWidth: true
+          implicitHeight: Style.audio.rowHeight
+          color: noiseArea.containsMouse ? Style.colors.gray1 : "transparent"
+
+          MouseArea {
+            id: noiseArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: AudioData.setNoiseCancelling(!AudioData.noiseOn)
+          }
+
+          RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Style.spacing.p1
+            anchors.rightMargin: Style.spacing.p1
+            spacing: Style.spacing.p1
+
+            Text {
+              text: AudioData.noiseOn ? "\u{F0126}" : "\u{F043D}"
+              color: AudioData.noiseOn ? Style.colors.accent : Style.colors.brightBlack
+              font.family: Style.font.symbols
+              font.pixelSize: Style.font.size2
+            }
+            Text {
+              Layout.fillWidth: true
+              text: "Noise cancelling"
+              color: AudioData.noiseOn ? Style.colors.brightWhite : Style.colors.white
+              font.family: Style.font.main
+              font.pointSize: Style.font.small
+            }
+            Text {
+              text: AudioData.noiseOn ? "On" : "Off"
+              color: AudioData.noiseOn ? Style.colors.accent : Style.colors.brightBlack
+              font.family: Style.font.main
+              font.pointSize: Style.font.small
+            }
+          }
+        }
         Repeater {
           model: AudioData.sources
           delegate: DeviceRow {
             required property var modelData
             node: modelData
-            isDefault: modelData === AudioData.source
-            onChosen: AudioData.setDefaultSource(modelData)
+            isDefault: AudioData.noiseOn ? modelData.name === AudioData.chainMic : modelData === AudioData.source
+            onChosen: AudioData.pickMic(modelData)
           }
         }
         Text {
@@ -271,7 +317,7 @@ Item {
               Layout.leftMargin: Style.spacing.p1
               Layout.rightMargin: Style.spacing.p1
               value: app.modelData.audio?.volume ?? 0
-              onMoved: v => app.modelData.audio.volume = v
+              onVolumeSet: v => app.modelData.audio.volume = v
             }
           }
         }
