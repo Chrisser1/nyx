@@ -23,7 +23,8 @@ case "${1:-}" in
   calendars) exec nyx-calendar-backend calendars ;;
   # Google and other online accounts: File -> New -> Collection Account.
   auth) exec evolution -c calendar ;;
-  open) exec gnome-calendar ;;
+  # GLib finds no time zone on NixOS without TZDIR, and GNOME Calendar aborts.
+  open) TZDIR="${TZDIR:-/etc/zoneinfo}" exec gnome-calendar ;;
   *)
     echo "usage: nyx-calendar {events <start> <end>|add <text>|add-caldav <name> <url> <user>|caldav-config <name> <url> <user>|google-calendars|add-google <path> <name>|remove-google <path>|calendars|auth|open}" >&2
     exit 2 ;;

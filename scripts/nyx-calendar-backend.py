@@ -54,6 +54,8 @@ def google_path(user, path):
 def repair_google(reg):
     for source in reg.list_sources(EDataServer.SOURCE_EXTENSION_AUTHENTICATION):
         auth = source.get_extension(EDataServer.SOURCE_EXTENSION_AUTHENTICATION)
+        if source.get_uid().startswith(GOOGLE_CLONE_PREFIX):
+            continue  # another calendar of the account, with its own path
         if auth.get_method() != "Google" or not auth.get_user():
             continue
         dav = source.get_extension(EDataServer.SOURCE_EXTENSION_WEBDAV_BACKEND)
@@ -370,7 +372,13 @@ def cmd_add_google(path, name):
     reg = registry()
     account = google_account(reg)
     uid = clone_uid(path)
-    if reg.ref_source(uid):
+    existing = reg.ref_source(uid)
+    if existing:
+        # Left over from an earlier add: make sure it points at this calendar.
+        dav = existing.get_extension(EDataServer.SOURCE_EXTENSION_WEBDAV_BACKEND)
+        if dav.get_resource_path() != path:
+            dav.set_resource_path(path)
+            existing.write_sync(None)
         return
     auth = account.get_extension(EDataServer.SOURCE_EXTENSION_AUTHENTICATION)
     source = EDataServer.Source.new_with_uid(uid, None)

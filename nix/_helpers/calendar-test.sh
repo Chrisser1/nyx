@@ -37,4 +37,12 @@ nyx-calendar remove-google /caldav/v2/x@group.calendar.google.com/events
 [ "$(cat "$STUB_DIR/calls")" = "$(printf 'add-google /caldav/v2/x@group.calendar.google.com/events Family\nremove-google /caldav/v2/x@group.calendar.google.com/events')" ] || fail "google calls: $(cat "$STUB_DIR/calls")"
 if nyx-calendar add-google /only/a/path 2>/dev/null; then fail "add-google without a name accepted"; fi
 
+# GNOME Calendar needs a time zone directory, which a NixOS session may not set.
+rm "$STUB_DIR/calls"
+nyx-calendar open
+[ "$(cat "$STUB_DIR/calls")" = "gnome-calendar TZDIR=/etc/zoneinfo" ] || fail "open sets TZDIR: $(cat "$STUB_DIR/calls")"
+rm "$STUB_DIR/calls"
+TZDIR=/custom nyx-calendar open
+[ "$(cat "$STUB_DIR/calls")" = "gnome-calendar TZDIR=/custom" ] || fail "open keeps an existing TZDIR"
+
 echo "calendar helper tests passed"

@@ -29,7 +29,7 @@
     tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ] { };
     monitorsStubbed = stubbed "monitors" [ (stub "hyprctl") (stub "notify-send") pkgs.jq pkgs.coreutils ] { };
     audioStubbed = stubbed "audio" [ (stub "pw-dump") (stub "pw-metadata") pkgs.wireplumber pkgs.jq pkgs.coreutils ] { };
-    calendarStubbed = stubbed "calendar" [ (stub "nyx-calendar-backend") (stub "evolution") ] { };
+    calendarStubbed = stubbed "calendar" [ (stub "nyx-calendar-backend") (stub "evolution") (stub "gnome-calendar") ] { };
     # The default keybinds as Lua and as the shell's JSON.
     keybindsRendered =
       let
