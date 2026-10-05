@@ -6,5 +6,5 @@ Rectangle {
   implicitWidth: Style.bar.borderWidth
   implicitHeight: Style.bar.height - Style.bar.borderWidth
   Layout.bottomMargin: Style.bar.borderWidth
-  color: Style.colors.gray3
+  color: Style.colors.line
 }

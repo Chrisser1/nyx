@@ -16,7 +16,7 @@ import QtQuick.Layouts
 BorderRect {
   id: root
   color: Style.colors.black
-  borderColor: Style.colors.gray3
+  borderColor: Style.colors.line
   borderWidth: Style.bar.borderWidth
   Layout.bottomMargin: Style.bar.borderWidth
 
@@ -39,13 +39,13 @@ BorderRect {
     State {
       name: "hovered"
       when: button.containsMouse && !button.pressed
-      PropertyChanges { root.borderColor: Style.colors.gray6 }
+      PropertyChanges { root.borderColor: Style.colors.lineStrong }
       PropertyChanges { button.cursorShape: Qt.PointingHandCursor }
     },
     State {
       name: "pressed"
       when: button.pressed && button.containsMouse
-      PropertyChanges { root.borderColor: Style.colors.gray6 }
+      PropertyChanges { root.borderColor: Style.colors.lineStrong }
       PropertyChanges { button.cursorShape: Qt.PointingHandCursor }
     }
   ]

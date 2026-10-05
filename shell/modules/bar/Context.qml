@@ -25,7 +25,7 @@ Item {
     spacing: Style.spacing.p1
     BorderRect {
       color: "transparent"
-      borderColor: Style.colors.gray3
+      borderColor: Style.colors.line
       borderWidth: Style.bar.borderWidth
       implicitHeight: Style.bar.height - Style.bar.borderWidth - Style.spacing.p1 * 2
       implicitWidth: implicitHeight

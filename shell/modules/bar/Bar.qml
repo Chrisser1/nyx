@@ -44,7 +44,7 @@ Item {
   // transparent and filled their parent.
   BorderRect {
     color: Style.colors.black
-    borderColor: Style.colors.gray3
+    borderColor: Style.colors.line
     bottomBorder: 1
     anchors {
       right: parent.right

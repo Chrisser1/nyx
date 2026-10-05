@@ -180,7 +180,7 @@ ExpandingButton {
       implicitHeight: Style.spacing.p3
       width: volumeSlider.availableWidth
       height: implicitHeight
-      color: Style.colors.gray3
+      color: Style.colors.line
 
       Rectangle {
         width: volumeSlider.visualPosition * parent.width

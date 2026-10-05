@@ -92,7 +92,7 @@ Button {
       if (!root.isOccupied)
         return Style.colors.black
       if (root.urgent)
-        return (hover.hovered && !root.active) ? Style.colors.gray6 : Style.colors.gray2
+        return (hover.hovered && !root.active) ? Style.colors.lineStrong : Style.colors.gray2
       return (root.active || hover.hovered) ? Style.colors.brightBlack : Style.colors.gray2
     }
 
@@ -131,7 +131,7 @@ Button {
           width: root.buttonSize * 0.25
           height: width
           radius: width / 2
-          color: (root.hovered || root.active) ? Style.colors.brightWhite : Style.colors.gray6
+          color: (root.hovered || root.active) ? Style.colors.brightWhite : Style.colors.lineStrong
           Behavior on color {
             ColorAnimation {
               duration: Style.durations.small

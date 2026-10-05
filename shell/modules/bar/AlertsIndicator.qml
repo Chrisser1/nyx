@@ -21,7 +21,7 @@ import QtQuick.Controls
 BorderRect {
   id: root
   color: Style.colors.black
-  borderColor: Style.colors.gray3
+  borderColor: Style.colors.line
   borderWidth: Style.bar.borderWidth
   Layout.bottomMargin: Style.bar.borderWidth
   // Fade rather than pop; `visible` only drops once the fade has finished,
@@ -51,12 +51,12 @@ BorderRect {
     State {
       name: "hovered"
       when: mouseArea.containsMouse && !mouseArea.pressed
-      PropertyChanges { root.borderColor: Style.colors.gray4 }
+      PropertyChanges { root.borderColor: Style.colors.lineStrong }
     },
     State {
       name: "pressed"
       when: mouseArea.pressed && mouseArea.containsMouse
-      PropertyChanges { root.borderColor: Style.colors.gray6 }
+      PropertyChanges { root.borderColor: Style.colors.lineStrong }
     }
   ]
   transitions: Transition {

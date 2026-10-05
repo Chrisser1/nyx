@@ -96,7 +96,7 @@ Item {
       background: BorderRect {
         id: outerRect
         anchors.fill: parent
-        borderColor: Style.colors.gray3
+        borderColor: Style.colors.line
         borderWidth: Style.bar.borderWidth
         GradientRect {
           id: innerRect
@@ -258,7 +258,7 @@ Item {
       }
       background: Rectangle {
         color: "transparent"
-        border.color: Style.colors.gray3
+        border.color: Style.colors.line
       }
 
       function goPrevious() {

@@ -28,7 +28,7 @@ BorderRect {
   id: root
   clip: true
   color: Style.colors.black
-  borderColor: Style.colors.gray3
+  borderColor: Style.colors.line
   borderWidth: Style.bar.borderWidth
   Layout.bottomMargin: Style.bar.borderWidth
 
@@ -107,26 +107,26 @@ BorderRect {
       name: "default"
       when: !root.active && !button.hovered
       PropertyChanges { indicator.text: root.buttonLabel }
-      PropertyChanges { buttonBg.borderColor: Style.colors.gray3 }
+      PropertyChanges { buttonBg.borderColor: Style.colors.line }
     },
     State {
       name: "hovered"
       when: !root.active && button.hovered
       PropertyChanges { indicator.text: root.buttonLabel }
-      PropertyChanges { buttonBg.borderColor: Style.colors.gray6 }
+      PropertyChanges { buttonBg.borderColor: Style.colors.lineStrong }
     },
     State {
       name: "active"
       when: root.active && !button.hovered
       PropertyChanges { indicator.text: "❯" }
-      PropertyChanges { buttonBg.borderColor: Style.colors.gray3 }
+      PropertyChanges { buttonBg.borderColor: Style.colors.line }
     },
     State {
       name: "activeHovered"
       when: root.active && button.hovered
-      PropertyChanges { root.borderColor: Style.colors.gray6 }
+      PropertyChanges { root.borderColor: Style.colors.lineStrong }
       PropertyChanges { indicator.text: "❯" }
-      PropertyChanges { buttonBg.borderColor: Style.colors.gray6 }
+      PropertyChanges { buttonBg.borderColor: Style.colors.lineStrong }
     }
   ]
 
@@ -160,7 +160,7 @@ BorderRect {
         id: buttonBg
         color: Style.colors.black
         borderWidth: Style.bar.borderWidth
-        borderColor: Style.colors.gray3
+        borderColor: Style.colors.line
         Text {
           anchors.centerIn: parent
           id: indicator

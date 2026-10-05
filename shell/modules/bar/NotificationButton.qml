@@ -99,7 +99,7 @@ Button {
       PropertyChanges {
       }
       PropertyChanges {
-        rect.borderColor: Style.colors.gray5
+        rect.borderColor: Style.colors.lineStrong
         quad.bottomLeft:  Qt.point(0.5, 1)
         quad.bottomRight: Qt.point(0.5, 1)
         quad.topLeft:     Qt.point(0, 0)
@@ -123,7 +123,7 @@ Button {
     State {
       name: "hovered"
       when: mouseArea.containsMouse && !root.active && !root.menuOpen
-      PropertyChanges { rect.borderColor: Style.colors.gray6 }
+      PropertyChanges { rect.borderColor: Style.colors.lineStrong }
 
     }
   ]
@@ -144,7 +144,7 @@ Button {
   background: GradientRect {
     id: rect
     color: Style.colors.black
-    borderColor: Style.colors.gray3
+    borderColor: Style.colors.line
     borderWidth: Style.bar.borderWidth
     anchors.fill: parent
 

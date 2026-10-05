@@ -46,7 +46,7 @@ Button {
       name: "hovered"
       when: hover.hovered
       PropertyChanges {
-        triangle.strokeColor: Style.colors.brightBlack
+        triangle.strokeColor: Style.colors.white
       }
     }
   ]
@@ -102,6 +102,7 @@ Button {
     color: "transparent"
     Triangle {
       id: triangle
+      strokeColor: Style.colors.lineStrong
       height: 20
 
       anchors.right: root.direction > 0 ? parent.right : undefined

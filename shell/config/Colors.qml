@@ -31,6 +31,17 @@ Singleton {
   readonly property string white: slot("white", "#C5B088")
   readonly property string brightWhite: slot("brightWhite", "#FCE8C3")
 
+  // Lines and outlines drawn over the background ladder: a share of the
+  // foreground mixed into the background, so they stay readable on any scheme
+  // (the ladder's own steps are too close together to outline anything).
+  function mix(a, b, t) {
+    const x = Qt.color(a);
+    const y = Qt.color(b);
+    return Qt.rgba(x.r + (y.r - x.r) * t, x.g + (y.g - x.g) * t, x.b + (y.b - x.b) * t, 1);
+  }
+  readonly property color line: root.mix(root.black, root.brightWhite, 0.3)
+  readonly property color lineStrong: root.mix(root.black, root.brightWhite, 0.55)
+
   readonly property string red: slot("red", "#EF2F27")
   readonly property string green: slot("green", "#519F50")
   readonly property string yellow: slot("yellow", "#FBB829")

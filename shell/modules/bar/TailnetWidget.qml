@@ -10,7 +10,7 @@ Rectangle {
   id: root
   required property string monitorId
 
-  visible: TailnetData.available
+  visible: TailnetData.running
   implicitWidth: root.visible ? glyph.implicitWidth : 0
   implicitHeight: parent.height
   color: "transparent"

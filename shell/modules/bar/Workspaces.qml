@@ -23,7 +23,7 @@ BorderRect {
   id: root
   leftBorder: Style.bar.borderWidth
   rightBorder: Style.bar.borderWidth
-  borderColor: Style.colors.gray3
+  borderColor: Style.colors.line
   color: Style.colors.black
   required property string monitorId
   // Latest data from Hyprland, replaced on every event burst.
