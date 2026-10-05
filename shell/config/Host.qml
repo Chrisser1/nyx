@@ -30,6 +30,7 @@ Singleton {
   readonly property string calendar: "nyx-calendar"
   readonly property string calc: "nyx-calc"
   readonly property string emoji: "nyx-emoji"
+  readonly property string docker: "nyx-docker"
   readonly property string brightnessctl: "brightnessctl"
   readonly property string kbdBacklight: "nyx-kbd-backlight"
   readonly property string sysmon: "btop"

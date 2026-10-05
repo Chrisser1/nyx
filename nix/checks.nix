@@ -21,9 +21,14 @@
       emojiType = false;
     };
 
+    # A helper built against fakes in _helpers/stubs instead of the real CLIs.
+    stub = name: pkgs.writeShellScriptBin name (builtins.readFile ./_helpers/stubs/${name}.sh);
+    stubbed = name: runtimeInputs: import ./_helpers/script.nix { inherit pkgs; } name runtimeInputs { };
+    dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ];
+
     # Runs tests/<name>/shell.qml headless against a copy of shell/; it prints PASS.
     qmlTest = name: { inputs ? [ ], setup ? "" }:
-      pkgs.runCommand "nyx-${name}-test" { nativeBuildInputs = [ pkgs.quickshell ] ++ inputs; } ''
+      pkgs.runCommand "nyx-${name}-qml-test" { nativeBuildInputs = [ pkgs.quickshell ] ++ inputs; } ''
         export HOME=$PWD/home XDG_CACHE_HOME=$PWD/cache XDG_STATE_HOME=$PWD/state
         export XDG_RUNTIME_DIR=$PWD QT_QPA_PLATFORM=offscreen
         mkdir -p $HOME $XDG_STATE_HOME/nyx
@@ -71,10 +76,26 @@
         '';
       };
 
+      docker-panel = qmlTest "docker" {
+        setup = ''
+          export STUB_DIR=$PWD/stub
+          mkdir -p $STUB_DIR
+          cp ${../tests/docker/ps.json} $STUB_DIR/ps.json
+          substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-docker"' '"${lib.getExe dockerStubbed}"'
+        '';
+      };
+
       clipboard = pkgs.runCommand "nyx-clipboard-test" {
         nativeBuildInputs = [ helpers.clipboard pkgs.imagemagick pkgs.jq ];
       } ''
         bash ${./_helpers/clipboard-test.sh}
+        touch $out
+      '';
+
+      docker = pkgs.runCommand "nyx-docker-test" {
+        nativeBuildInputs = [ dockerStubbed pkgs.jq ];
+      } ''
+        bash ${./_helpers/docker-test.sh}
         touch $out
       '';
 

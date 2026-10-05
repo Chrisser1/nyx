@@ -45,10 +45,11 @@ in rec {
     NYX_EMOJI_DATA = "${emojiData}";
     NYX_EMOJI_TYPE = if emojiType then "1" else "0";
   };
+  docker = script "docker" [ pkgs.docker-client pkgs.jq ] { };
   wallpaper = script "wallpaper" (with pkgs; [ jq procps findutils coreutils ffmpeg-headless gslapper hyprland theme ]) {
     NYX_WALLPAPER_DIR = wallpaperDir;
     NYX_WALLPAPER_DEFAULT = defaultWallpaper;
   };
 
-  all = [ power screenshot colorpicker audio kbdBacklight brightness clipboard calc calendar monitors wallpaper emoji ];
+  all = [ power screenshot colorpicker audio kbdBacklight brightness clipboard calc calendar monitors wallpaper emoji docker ];
 }

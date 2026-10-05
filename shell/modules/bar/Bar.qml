@@ -111,6 +111,7 @@ Item {
           SysmonWidget { }
           NetworkWidget { monitorId: root.monitorId }
           BluetoothWidget { }
+          DockerWidget { monitorId: root.monitorId }
           BatteryWidget { }
           Separator {}
           Clock { monitorId: root.monitorId }

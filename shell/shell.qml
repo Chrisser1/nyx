@@ -18,6 +18,7 @@ import qs.modules.bar
 import qs.modules.launcher
 import qs.modules.calendar
 import qs.modules.clipboard
+import qs.modules.docker
 import qs.modules.network
 import qs.modules.media
 import qs.modules.system
@@ -55,6 +56,13 @@ ShellRoot {
     name: "toggleClipboard"
     description: "Toggles the clipboard history"
     onPressed: GlobalState.toggleClipboard(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
+  }
+
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "toggleDocker"
+    description: "Toggles the Docker containers panel"
+    onPressed: GlobalState.toggleDocker(Hyprland.focusedMonitor?.name ?? Config.primaryDisplay)
   }
 
   GlobalShortcut { // qmllint disable unresolved-type
@@ -136,6 +144,7 @@ ShellRoot {
             || (GlobalState.mediaOpen && GlobalState.mediaMonitorId === scope.monitorId)
             || (GlobalState.clipboardOpen && GlobalState.clipboardMonitorId === scope.monitorId)
             || (GlobalState.switcherOpen && GlobalState.switcherMonitorId === scope.monitorId)
+            || (GlobalState.dockerOpen && GlobalState.dockerMonitorId === scope.monitorId)
           // Deliberately empty, for every overlay. Hyprland fires `cleared`
           // immediately after the grab activates, so closing from here shuts
           // the panel the moment it opens. Click-outside is handled instead by
@@ -224,6 +233,7 @@ ShellRoot {
               when: ((GlobalState.launcherOpen && GlobalState.launcherMonitorId === scope.monitorId)
                   || (GlobalState.clipboardOpen && GlobalState.clipboardMonitorId === scope.monitorId)
                   || (GlobalState.switcherOpen && GlobalState.switcherMonitorId === scope.monitorId)
+                  || (GlobalState.dockerOpen && GlobalState.dockerMonitorId === scope.monitorId)
                   || (GlobalState.trayMenuOpen && Hyprland.focusedMonitor?.name === scope.monitorId))
                 && scope.windows.length > 0
               PropertyChanges { content.color: Functions.transparentize("#000", 0.7) }
@@ -270,6 +280,10 @@ ShellRoot {
         }
 
         WindowSwitcherPanel {
+          monitorId: scope.monitorId
+        }
+
+        DockerPanel {
           monitorId: scope.monitorId
         }
 

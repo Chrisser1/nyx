@@ -30,13 +30,15 @@ Singleton {
   property string clipboardMonitorId: ""
   property bool switcherOpen: false
   property string switcherMonitorId: ""
+  property bool dockerOpen: false
+  property string dockerMonitorId: ""
   property bool mediaOpen: false
   property string mediaMonitorId: ""
   // Window x of the bar widget's centre; the panel hangs under it.
   property real mediaAnchorX: 0
   property bool overlayOpen: root.launcherOpen || root.trayMenuOpen || root.calendarOpen
     || root.wifiOpen || root.sysOpen || root.mediaOpen || root.clipboardOpen
-    || root.switcherOpen
+    || root.switcherOpen || root.dockerOpen
   property QsMenuHandle activeMenu: null
   property bool trayMenuOpen: false
   property int menuDirection: Qt.LeftToRight
@@ -205,6 +207,21 @@ Singleton {
     }
   }
 
+  function openDocker(id = Config.primaryDisplay) {
+    root.closeAll()
+    root.dockerMonitorId = id
+    root.dockerOpen = true
+  }
+
+  function closeDocker() {
+    root.dockerOpen = false
+  }
+
+  function toggleDocker(id = Config.primaryDisplay) {
+    if (root.dockerOpen && root.dockerMonitorId === id) closeDocker()
+    else openDocker(id)
+  }
+
   // Alt+Tab; services/WindowSwitcher drives it.
   function openSwitcher(id = Config.primaryDisplay) {
     root.closeAll()
@@ -225,6 +242,7 @@ Singleton {
     root.closeMedia()
     root.closeClipboard()
     root.closeSwitcher()
+    root.closeDocker()
     if (root.trayMenuOpen) root.closeTrayMenu()
     if (root.launcherOpen) root.closeLauncher()
   }

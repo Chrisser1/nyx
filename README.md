@@ -74,3 +74,10 @@ hl.bind("ALT + Tab", hl.dsp.global("nyx:windowSwitcher"))
 hl.bind("ALT + SHIFT + Tab", hl.dsp.global("nyx:windowSwitcherBack"))
 hl.bind("ALT + ALT_L", hl.dsp.global("nyx:windowSwitcherCommit"), { release = true, non_consuming = true })
 ```
+
+## Docker
+
+`nyx:toggleDocker` lists the containers of `DOCKER_HOST` (rootless works):
+Enter starts, stops or unpauses, Ctrl+R restarts, Ctrl+L follows the logs and
+Ctrl+E opens a shell in the terminal, Shift+Delete twice removes a stopped one.
+The bar shows the running count while anything runs.
