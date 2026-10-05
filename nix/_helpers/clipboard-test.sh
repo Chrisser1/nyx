@@ -26,6 +26,12 @@ CLIPBOARD_STATE=nil nyx-clipboard store < /dev/null
 now=$(date +%s)
 list | jq -e --argjson now "$now" 'all(.time != null and $now - .time < 60)' > /dev/null || fail "arrival times"
 
+# Listing must not touch the times file: the panel refreshes when it changes,
+# so rewriting it on every list made the panel refresh, and flicker, forever.
+seen_time() { stat -c %y "$XDG_STATE_HOME/nyx/clipboard/seen.tsv"; }
+before=$(seen_time); sleep 1; list > /dev/null; list > /dev/null
+[ "$(seen_time)" = "$before" ] || fail "list rewrote the times file"
+
 text_id=$(list | jq -r '.[1].id')
 image_id=$(list | jq -r '.[0].id')
 [ "$(nyx-clipboard text "$text_id")" = "$(printf 'hello\tworld')" ] || fail "text decode"

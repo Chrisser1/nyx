@@ -5,7 +5,7 @@ CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/nyx/clipboard"
 SEEN="$STATE/seen.tsv"
 PINS="$STATE/pins"
 mkdir -p "$PINS" "$CACHE"
-touch "$SEEN"
+[ -e "$SEEN" ] || touch "$SEEN"
 
 usage() {
   echo "usage: nyx-clipboard {store|list|text <id>|image <id>|copy <id>|delete <id>|pin <id>|unpin <id>|wipe}" >&2
@@ -41,11 +41,12 @@ pins() {
   done
 }
 
-# Drops times and cached images of entries that are gone.
+# Drops times and cached images of entries that are gone. The panel refreshes
+# whenever the times file changes, so it is only rewritten when something went.
 prune() {
   local ids=$1 f
   awk -F '\t' 'NR == FNR { keep[$1]; next } $1 in keep' <(printf '%s\n' "$ids") "$SEEN" > "$SEEN.tmp"
-  mv "$SEEN.tmp" "$SEEN"
+  if cmp -s "$SEEN.tmp" "$SEEN"; then rm -f "$SEEN.tmp"; else mv "$SEEN.tmp" "$SEEN"; fi
   for f in "$CACHE"/*; do
     [ -e "$f" ] || continue
     grep -qxF "$(basename "$f")" <(printf '%s\n' "$ids") || rm -f "$f"
