@@ -53,12 +53,32 @@ let
     [ $missing -eq 0 ]
   '';
 in
-pkgs.writeShellApplication {
-  name = "nyx-shell";
-  # qt6ct for Qt styling; icons come from QS_ICON_THEME.
-  runtimeEnv = {
-    QT_QPA_PLATFORMTHEME = "qt6ct";
-    QS_ICON_THEME = iconTheme;
+let
+  shell = pkgs.writeShellApplication {
+    name = "nyx-shell";
+    runtimeInputs = [ pkgs.jq ];
+    # qt6ct for Qt styling; icons come from QS_ICON_THEME.
+    runtimeEnv = {
+      QT_QPA_PLATFORMTHEME = "qt6ct";
+      QS_ICON_THEME = iconTheme;
+    };
+    text = ''
+      # `restart` stops the running shell (whichever build it is, so it works
+      # right after a rebuild), then starts this one detached.
+      if [ "''${1:-}" = restart ]; then
+        for pid in $(${exe pkgs.quickshell} list --all --json | jq -r '.[] | select(.config_path | test("nyx-shell-src")) | .pid'); do
+          ${exe pkgs.quickshell} kill --pid "$pid" || true
+        done
+        # Let the old shell release the notification service.
+        sleep 1
+        exec ${exe pkgs.quickshell} -p ${src} -d
+      fi
+      exec ${exe pkgs.quickshell} -p ${src} "$@"
+    '';
   };
-  text = ''exec ${exe pkgs.quickshell} -p ${src} "$@"'';
+in
+pkgs.symlinkJoin {
+  name = "nyx-shell";
+  paths = [ shell (pkgs.writeShellScriptBin "nyx-restart" ''exec ${lib.getExe shell} restart'') ];
+  meta.mainProgram = "nyx-shell";
 }
