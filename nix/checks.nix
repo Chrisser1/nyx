@@ -112,6 +112,7 @@
 
       notification-button = qmlTest "notifybutton" { };
       bar-colors = qmlTest "barcolors" { };
+      bar-context = qmlTest "context" { };
 
       mirror-panel = qmlTest "mirror" {
         setup = ''

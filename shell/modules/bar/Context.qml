@@ -18,7 +18,9 @@ import Quickshell.Widgets
 
 Item {
   id: root
-  implicitWidth: 200
+  // As wide as the label needs, so what follows sits right after it.
+  implicitWidth: rowLayout.implicitWidth
+  implicitHeight: rowLayout.implicitHeight
   RowLayout {
     id: rowLayout
     anchors.fill: parent
@@ -43,7 +45,9 @@ Item {
       Layout.fillWidth: true
       spacing: -2
       Text {
-
+        objectName: "title"
+        Layout.fillWidth: true
+        elide: Text.ElideRight
         font {
           family: Style.font.light
           pointSize: Style.font.small
@@ -54,9 +58,9 @@ Item {
       }
       Text {
         id: window
+        objectName: "desc"
         elide: Text.ElideRight
         Layout.fillWidth: true
-        Layout.rightMargin: Style.spacing.p5
         font {
           family: Style.font.light
           pointSize: Style.font.tiny

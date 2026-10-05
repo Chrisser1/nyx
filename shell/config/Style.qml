@@ -35,6 +35,8 @@ Singleton {
     readonly property int radius: 0 * Config.scale
     readonly property real borderWidth: 1 * Config.scale
     readonly property int sliderWidth: 120 * Config.scale
+    // The widest the open-window label grows before its text is elided.
+    readonly property int contextMaxWidth: 360 * Config.scale
   }
   readonly property Bar bar: Bar {}
 

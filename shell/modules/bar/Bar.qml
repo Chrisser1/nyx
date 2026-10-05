@@ -79,13 +79,14 @@ Item {
           Separator {}
           Loader {
             Layout.fillHeight: true
-            Layout.fillWidth: true
+            Layout.maximumWidth: Style.bar.contextMaxWidth
             active: LauncherData.appsData.length > 0
             sourceComponent: Context { }
           }
 
           MediaWidget { monitorId: root.monitorId }
           SoundVisual { Layout.fillHeight: true }
+          Item { Layout.fillWidth: true }
         }
       }
 
