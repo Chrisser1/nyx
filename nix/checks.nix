@@ -130,6 +130,9 @@
           export STUB_DIR=$PWD/stub
           mkdir -p $STUB_DIR
           cp ${../tests/docker/ps.json} $STUB_DIR/ps.json
+          cp ${../tests/docker/inspect.json} $STUB_DIR/inspect.json
+          cp ${../tests/docker/stats.json} $STUB_DIR/stats.json
+          cp ${../tests/docker/logs.txt} $STUB_DIR/logs.txt
           substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-docker"' '"${lib.getExe dockerStubbed}"'
         '';
       };

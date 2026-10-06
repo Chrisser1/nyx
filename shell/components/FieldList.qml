@@ -1,5 +1,6 @@
 // Label/value rows for detail panes. Fields are { label, value, color?, copy? };
-// clicking a field with `copy` emits copied() with that text.
+// clicking a field with `copy` emits copied() with that text, and one with
+// `open` (a URL) emits opened().
 
 pragma ComponentBehavior: Bound
 
@@ -12,6 +13,7 @@ ColumnLayout {
 
   property var fields: []
   signal copied(string text)
+  signal opened(string url)
 
   spacing: Style.spacing.p2
 
@@ -45,10 +47,13 @@ ColumnLayout {
       MouseArea {
         id: area
         anchors.fill: value
-        enabled: field.modelData.copy !== undefined
+        enabled: field.modelData.copy !== undefined || field.modelData.open !== undefined
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.copied(field.modelData.copy)
+        onClicked: {
+          if (field.modelData.open !== undefined) root.opened(field.modelData.open);
+          else root.copied(field.modelData.copy);
+        }
       }
     }
   }

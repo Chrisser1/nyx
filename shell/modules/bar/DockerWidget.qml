@@ -1,16 +1,18 @@
-// Running-container count; hidden while nothing runs. Opens the Docker panel.
+// Running-container count; hidden while nothing runs or fails, red while a container is
+// restarting or unhealthy. Opens the Docker panel.
 
 import QtQuick
 import QtQuick.Layouts
 import qs
 import qs.config
+import qs.components
 import qs.services
 
 Rectangle {
   id: root
   required property string monitorId
 
-  visible: DockerData.running > 0
+  visible: DockerData.running > 0 || DockerData.troubled.length > 0
   implicitWidth: root.visible ? layout.implicitWidth : 0
   implicitHeight: parent.height
   color: "transparent"
@@ -24,7 +26,8 @@ Rectangle {
       text: "\u{F0868}"
       font.family: Style.font.symbols
       font.pointSize: Style.font.small
-      color: area.containsMouse ? Style.colors.brightWhite : Style.colors.brightBlue
+      color: area.containsMouse ? Style.colors.brightWhite
+        : DockerData.troubled.length > 0 ? Style.colors.red : Style.colors.brightBlue
       Layout.alignment: Qt.AlignVCenter
     }
     Text {
@@ -42,5 +45,11 @@ Rectangle {
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
     onClicked: GlobalState.toggleDocker(root.monitorId)
+  }
+
+  Tip {
+    text: [`Docker: ${DockerData.running} running`,
+      ...DockerData.troubled.map(c => `${c.name}: ${c.state === "running" ? "unhealthy" : c.state}`)].join("\n")
+    hovered: area.containsMouse
   }
 }

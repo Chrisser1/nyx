@@ -1,13 +1,15 @@
 # Containers of the user's Docker daemon; DOCKER_HOST is honoured, so rootless works.
 usage() {
-  echo "usage: nyx-docker {list|events|start <id>|stop <id>|restart <id>|unpause <id>|remove <id>|logs <id>|shell <id>}" >&2
+  echo "usage: nyx-docker {list|events|stats|start <id>|stop <id>|restart <id>|unpause <id>|remove <id>|logs <id>|shell <id>|inspect <id>|project <start|stop|restart> <name>}" >&2
   exit 2
 }
 
 [ $# -ge 1 ] || usage
 case "$1" in
-  list|events) ;;
-  start|stop|restart|unpause|remove|logs|shell) [ $# -ge 2 ] || usage ;;
+  list|events|stats) ;;
+  start|stop|restart|unpause|remove|logs|shell|inspect) [ $# -ge 2 ] || usage ;;
+  project) [ $# -eq 3 ] || usage
+    case "$2" in start|stop|restart) ;; *) usage ;; esac ;;
   *) usage ;;
 esac
 
@@ -34,6 +36,29 @@ case "$1" in
   events) exec docker events --filter type=container --format '{{.Action}} {{.Actor.ID}}' ;;
   start|stop|restart|unpause) docker "$1" "$2" > /dev/null ;;
   remove) docker rm "$2" > /dev/null ;;
-  logs) exec docker logs --follow --tail 200 "$2" ;;
+  # stderr too: many images log there, and the panel only reads stdout.
+  logs) exec docker logs --follow --tail 200 "$2" 2>&1 ;;
+  stats)
+    # One sample per running container, keyed by short id.
+    docker stats --no-stream --format json | jq -sc 'map({key: .ID[:12], value: {
+      cpu: (.CPUPerc | rtrimstr("%") | tonumber? // 0),
+      memory: .MemUsage,
+      memPercent: (.MemPerc | rtrimstr("%") | tonumber? // 0)
+    }}) | from_entries' ;;
+  inspect)
+    docker inspect "$2" | jq -c '.[0] | {
+      health: (.State.Health.Status // ""),
+      restarts: .RestartCount,
+      command: (((.Config.Entrypoint // []) + (.Config.Cmd // [])) | join(" ")),
+      env: (.Config.Env // []),
+      mounts: [.Mounts[] | "\(.Source // .Name) -> \(.Destination)"],
+      networks: [(.NetworkSettings.Networks // {}) | to_entries[] | "\(.key) \(.value.IPAddress)"]
+    }' ;;
+  project)
+    # A compose project is the containers carrying its label; no compose file needed.
+    ids=$(docker ps --all --quiet --filter "label=com.docker.compose.project=$3")
+    [ -n "$ids" ] || exit 0
+    # shellcheck disable=SC2086
+    docker "$2" $ids > /dev/null ;;
   shell) exec docker exec -it "$2" sh -c 'if command -v bash > /dev/null; then exec bash; else exec sh; fi' ;;
 esac

@@ -1,0 +1,1 @@
+[{"State":{"Health":{"Status":"healthy"}},"RestartCount":2,"Config":{"Entrypoint":["docker-entrypoint.sh"],"Cmd":["postgres"],"Env":["POSTGRES_USER=app","TZ=UTC"]},"Mounts":[{"Source":"/data","Destination":"/var/lib/postgresql"}],"NetworkSettings":{"Networks":{"bridge":{"IPAddress":"172.17.0.2"}}}}]
