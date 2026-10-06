@@ -89,4 +89,9 @@ BorderRect {
       }
     }
   }
+
+  Tip {
+    text: "System panel"
+    hovered: button.containsMouse
+  }
 }

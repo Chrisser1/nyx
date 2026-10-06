@@ -12,6 +12,7 @@ import Quickshell.Networking
 import qs
 import qs.services
 import qs.config
+import qs.components
 
 Rectangle {
   id: root
@@ -76,5 +77,10 @@ Rectangle {
       Layout.alignment: Qt.AlignVCenter
       Layout.leftMargin: Style.spacing.p1
     }
+  }
+
+  Tip {
+    text: NetworkData.label !== "" ? `Network: ${NetworkData.label}` : "Network"
+    hovered: mouseArea.containsMouse
   }
 }

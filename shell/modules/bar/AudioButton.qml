@@ -194,4 +194,14 @@ ExpandingButton {
       // border.color: Style.colors.magenta
     }
   }
+
+  Tip {
+    text: "Audio panel"
+    hovered: srcMouse.containsMouse
+  }
+
+  Tip {
+    text: "Mute or unmute the microphone"
+    hovered: inputMouse.containsMouse
+  }
 }

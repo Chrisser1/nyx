@@ -72,6 +72,7 @@ Item {
     id: btn
     required property string glyph
     property string label: ""
+    property string tip: ""
     signal activated()
 
     implicitWidth: row.implicitWidth + Style.spacing.p1 * 2
@@ -108,6 +109,11 @@ Item {
       hoverEnabled: true
       cursorShape: Qt.PointingHandCursor
       onClicked: btn.activated()
+    }
+
+    Tip {
+      text: btn.tip
+      hovered: area.containsMouse
     }
   }
 
@@ -428,6 +434,7 @@ Item {
         IconButton {
           glyph: "󰑓"
           label: "rescan"
+          tip: "Scan for networks"
           onActivated: NetworkData.rescan()
         }
 
@@ -436,6 +443,7 @@ Item {
         IconButton {
           glyph: "󰒓"
           label: "settings"
+          tip: "Open the connection editor"
           onActivated: root.openEditor()
         }
       }

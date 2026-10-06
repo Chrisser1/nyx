@@ -131,4 +131,9 @@ Rectangle {
       }
     }
   }
+
+  Tip {
+    text: "Click: player\nMiddle click: play/pause\nScroll: skip track"
+    hovered: area.containsMouse
+  }
 }

@@ -448,4 +448,9 @@ Item {
     }
   }
 
+
+  Tip {
+    text: "Launcher\nRight click: menu"
+    hovered: mouseArea.containsMouse
+  }
 }

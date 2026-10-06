@@ -244,6 +244,7 @@ Item {
 
           IconButton {
             glyph: "\u{F0156}"
+            tip: "Close (Esc)"
             onActivated: root.closeRequested()
           }
         }

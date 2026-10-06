@@ -107,4 +107,9 @@ Button {
       color: Style.colors.brightWhite
     }
   }
+
+  Tip {
+    text: "Notifications"
+    hovered: mouseArea.containsMouse
+  }
 }

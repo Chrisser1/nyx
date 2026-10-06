@@ -91,18 +91,21 @@ SplitPanel {
       visible: root.unlocked
       glyph: "\u{F0450}"
       label: "Sync"
+      tip: "Sync the vault"
       onActivated: VaultData.sync()
     },
     IconButton {
       visible: root.unlocked
       glyph: "\u{F033E}"
       label: "Lock"
+      tip: "Lock the vault"
       onActivated: VaultData.lock()
     },
     IconButton {
       visible: VaultData.state !== "" && !root.unlocked
       glyph: "\u{F0306}"
       label: VaultData.state === "locked" ? "Unlock" : "Log in"
+      tip: "Unlock or log in (Enter)"
       onActivated: root.setup()
     }
   ]
@@ -112,30 +115,35 @@ SplitPanel {
       visible: root.current !== null
       glyph: "\u{F018F}"
       label: root.isLogin ? "Pass" : "Note"
+      tip: "Copy (Enter)"
       onActivated: root.use(root.mainField, false)
     },
     IconButton {
       visible: root.isLogin
       glyph: "\u{F0004}"
       label: "User"
+      tip: "Copy username (Ctrl+U)"
       onActivated: root.use("username", false)
     },
     IconButton {
       visible: root.isLogin
       glyph: "\u{F0150}"
       label: "TOTP"
+      tip: "Copy TOTP code (Ctrl+T)"
       onActivated: root.use("totp", false)
     },
     IconButton {
       visible: root.isLogin
       glyph: "\u{F030C}"
       label: "Type pass"
+      tip: "Type password (Shift+Enter)"
       onActivated: root.use("password", true)
     },
     IconButton {
       visible: root.isLogin
       glyph: "\u{F030C}"
       label: "Type user"
+      tip: "Type username (Ctrl+Shift+U)"
       onActivated: root.use("username", true)
     }
   ]

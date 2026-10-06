@@ -7,6 +7,8 @@ Rectangle {
 
   required property string glyph
   property string label: ""
+  // Hover hint, with the key in brackets where there is one.
+  property string tip: ""
   property bool danger: false
   property bool checked: false
   signal activated()
@@ -49,5 +51,10 @@ Rectangle {
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
     onClicked: root.activated()
+  }
+
+  Tip {
+    text: root.tip
+    hovered: area.containsMouse
   }
 }

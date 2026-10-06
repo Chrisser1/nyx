@@ -36,6 +36,8 @@ BorderRect {
   required property string monitorId
   required property string buttonLabel
   property bool isEmpty: false;
+  // Hover hint for the main button.
+  property string tip: ""
   // The glyph's colour, and the border's while hovered.
   property color tint: Style.colors.white
 
@@ -158,6 +160,10 @@ BorderRect {
         }
       }
       implicitWidth: root.height
+      Tip {
+        text: root.tip
+        hovered: mouseArea.containsMouse
+      }
       background: BorderRect {
         id: buttonBg
         color: Style.colors.black

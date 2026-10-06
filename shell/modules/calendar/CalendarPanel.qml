@@ -92,6 +92,11 @@ Item {
       cursorShape: Qt.PointingHandCursor
       onClicked: btn.activated()
     }
+
+    Tip {
+      text: btn.tip
+      hovered: area.containsMouse
+    }
   }
 
   BorderRect {
@@ -134,6 +139,7 @@ Item {
 
         IconButton {
           glyph: "󰅁"
+          tip: "Previous month"
           onActivated: Calendar.prevMonth()
         }
 
@@ -148,21 +154,25 @@ Item {
 
         IconButton {
           glyph: "󰅂"
+          tip: "Next month"
           onActivated: Calendar.nextMonth()
         }
 
         IconButton {
           glyph: "󰃭"
+          tip: "Jump to today"
           onActivated: Calendar.goToday()
         }
 
         IconButton {
           glyph: "󰐕"
+          tip: "Calendar setup"
           onActivated: Calendar.openSetup()
         }
 
         IconButton {
           glyph: "󰏌"
+          tip: "Open in calendar app"
           onActivated: {
             Calendar.openExternal()
             GlobalState.closeCalendar()

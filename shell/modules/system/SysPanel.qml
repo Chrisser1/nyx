@@ -300,6 +300,7 @@ Item {
     id: btn
     required property string glyph
     property string label: ""
+    property string tip: ""
     // Resting colour; hover always brightens on top of it.
     property color tint: Style.colors.white
     signal activated()
@@ -346,6 +347,11 @@ Item {
       hoverEnabled: true
       cursorShape: Qt.PointingHandCursor
       onClicked: btn.activated()
+    }
+
+    Tip {
+      text: btn.tip
+      hovered: area.containsMouse
     }
   }
 
@@ -414,6 +420,7 @@ Item {
           glyph: "󰌌"
           label: "keys"
           opacity: root.showKeys ? 1 : 0.6
+          tip: "Show or hide keybinds"
           onActivated: root.showKeys = !root.showKeys
         }
       }
@@ -470,6 +477,7 @@ Item {
           glyph: "󰤨"
           label: "wifi"
           // Hand off rather than reimplement the picker.
+          tip: "Open the Wi-Fi panel"
           onActivated: GlobalState.toggleWifi(root.monitorId)
         }
       }
@@ -520,6 +528,7 @@ Item {
           glyph: "󰍉"
           label: "scan"
           tint: BluetoothData.scanning ? Style.colors.accent : Style.colors.white
+          tip: "Scan for Bluetooth devices"
           onActivated: BluetoothData.scanRequested = !BluetoothData.scanRequested
         }
 
@@ -528,6 +537,7 @@ Item {
           glyph: "󰒓"
           // quickshell exposes pair() but no way to answer a passkey prompt, so
           // anything that wants a confirmation code needs a real manager.
+          tip: "Open the Bluetooth manager"
           onActivated: root.openBluetoothManager()
         }
 
@@ -644,12 +654,14 @@ Item {
           glyph: ""
           label: "cpu"
           opacity: Processes.sortKey === "%cpu" ? 1 : 0.5
+          tip: "Sort by CPU"
           onActivated: Processes.setSort("%cpu")
         }
         IconButton {
           glyph: "󰍛"
           label: "mem"
           opacity: Processes.sortKey === "%mem" ? 1 : 0.5
+          tip: "Sort by memory"
           onActivated: Processes.setSort("%mem")
         }
       }
@@ -843,6 +855,7 @@ Item {
         IconButton {
           glyph: "󰍛"
           label: "btop"
+          tip: "Open btop"
           onActivated: root.openBtop()
         }
       }

@@ -167,6 +167,7 @@ Item {
             property bool armed: false
             glyph: "\u{F00E2}"
             label: wipe.armed ? "Wipe history?" : ""
+            tip: "Wipe history"
             danger: true
             checked: wipe.armed
             onActivated: {
@@ -345,6 +346,7 @@ Item {
           IconButton {
             visible: root.current !== null && root.isUrl(root.current.preview)
             glyph: "\u{F03CC}"
+            tip: "Open link"
             onActivated: {
               Qt.openUrlExternally(root.current.preview.trim());
               GlobalState.closeClipboard();
@@ -353,22 +355,26 @@ Item {
           IconButton {
             visible: root.current !== null
             glyph: "\u{F018F}"
+            tip: "Use entry (Enter)"
             onActivated: root.accept()
           }
           IconButton {
             visible: root.current !== null
             glyph: root.current?.pinned ? "\u{F0931}" : "\u{F0403}"
             checked: root.current?.pinned ?? false
+            tip: "Pin or unpin (Ctrl+P)"
             onActivated: root.togglePin()
           }
           IconButton {
             visible: root.current !== null
             glyph: "\u{F01B4}"
             danger: true
+            tip: "Delete (Shift+Del)"
             onActivated: root.remove()
           }
           IconButton {
             glyph: "\u{F0156}"
+            tip: "Close (Esc)"
             onActivated: GlobalState.closeClipboard()
           }
         }

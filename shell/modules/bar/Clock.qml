@@ -14,6 +14,7 @@ import QtQuick.Layouts
 import qs
 import qs.services
 import qs.config
+import qs.components
 
 Rectangle {
   id: root
@@ -68,5 +69,10 @@ Rectangle {
       color: Style.colors.brightBlack
       text: Time.date
     }
+  }
+
+  Tip {
+    text: "Calendar"
+    hovered: mouseArea.containsMouse
   }
 }
