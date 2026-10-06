@@ -26,8 +26,11 @@ Button {
 
   readonly property string activeWorkspaceAddress: HyprlandData
     .activeWorkspaceAddressFor(monitorId)
-  property var workspaces: HyprlandData.workspacesByMonitor[monitorId] ?? []
-  property var persistent: workspaces.filter(w => w.ispersistent)
+  // This monitor's numbered workspaces in order. With split-monitor-workspaces
+  // each monitor owns its own range (1-9, 10-18, ...), so "next" is the next
+  // one in this list, not the active number plus one.
+  readonly property var numbered: (HyprlandData.workspacesByMonitor[monitorId] ?? [])
+    .filter(w => w.type !== "special" && /^\d+$/.test(w.address))
 
   HoverHandler {
     id: hover
@@ -59,31 +62,24 @@ Button {
     id: moveWindow
     running: false
     property string wsAddress: ""
-    command: [Host.hyprctl, "eval", `hl.config({cursor = { no_warps = true }}); hl.dispatch(hl.dsp.window.move({ workspace = "${wsAddress}", window = 'activewindow', follow = true })); hl.config({cursor = { no_warps = false }})
-    `]
+    property string window: ""
+    command: [Host.hyprctl, "eval", `hl.config({cursor = { no_warps = true }}); hl.dispatch(hl.dsp.window.move({ workspace = "${wsAddress}", window = 'address:${window}', follow = true })); hl.config({cursor = { no_warps = false }})`]
   }
 
   onPressed: {
     root.active = true
     pressFlash.restart()
 
-    // Only numbered workspaces shift; their address is the number as a string.
-    const current = /^\d+$/.test(root.activeWorkspaceAddress)
-      ? Number(root.activeWorkspaceAddress) : 0
-    if (current === 0) { return }
-    let move = current + root.direction
-    let focusedMonitor = Hyprland.focusedMonitor?.name ?? ""
-    if (focusedMonitor !== Config.displays.center) { return }
+    // The window that last had focus on this bar's monitor, which is not
+    // necessarily the focused window when another monitor has focus.
+    const index = root.numbered.findIndex(w => w.address === root.activeWorkspaceAddress)
+    const target = root.numbered[index + root.direction]
+    const window = root.numbered[index]?.lastwindow ?? ""
+    if (index < 0 || !target || window === "" || /^0x0+$/.test(window)) { return }
 
-    if (move > persistent.length) {
-      if (direction < 0) {
-        move = persistent.length
-      } else { return }
-    }
-    if (move > 0) {
-      moveWindow.wsAddress = String(move)
-      moveWindow.running = true
-    }
+    moveWindow.wsAddress = target.address
+    moveWindow.window = window
+    moveWindow.running = true
   }
 
   transitions: [
