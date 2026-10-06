@@ -1,0 +1,8 @@
+{
+  "TCP": { "443": { "HTTPS": true }, "8080": { "HTTP": true } },
+  "Web": {
+    "pc.tail0.ts.net:443": { "Handlers": { "/": { "Proxy": "http://127.0.0.1:3000" }, "/files": { "Path": "/srv/files" } } },
+    "pc.tail0.ts.net:8080": { "Handlers": { "/": { "Proxy": "http://127.0.0.1:8080" } } }
+  },
+  "AllowFunnel": { "pc.tail0.ts.net:443": true }
+}

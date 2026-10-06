@@ -1,0 +1,2 @@
+pong from pc-1 (100.64.0.4) via DERP(fra) in 30ms
+pong from pc-1 (100.64.0.4) via 1.2.3.4:41641 in 10ms

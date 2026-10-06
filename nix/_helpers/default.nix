@@ -63,7 +63,7 @@ in rec {
     NYX_EMOJI_TYPE = if emojiType then "1" else "0";
   };
   docker = script "docker" [ pkgs.docker-client pkgs.jq ] { };
-  tailnet = script "tailnet" [ pkgs.tailscale pkgs.jq ] { };
+  tailnet = script "tailnet" [ pkgs.tailscale pkgs.jq pkgs.openssh ] { };
   bitwarden = script "bitwarden" (with pkgs; [ rbw jq wl-clipboard wtype libnotify coreutils findutils gnugrep ]) {
     NYX_BITWARDEN_CLEAR = toString bitwardenClear;
     NYX_BITWARDEN_TYPE_DELAY = "0.25";

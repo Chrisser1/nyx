@@ -26,7 +26,7 @@
     stub = name: pkgs.writeShellScriptBin name (builtins.readFile ./_helpers/stubs/${name}.sh);
     stubbed = name: runtimeInputs: env: import ./_helpers/script.nix { inherit pkgs; } name runtimeInputs env;
     dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ] { };
-    tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") pkgs.jq ] { };
+    tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") (stub "ssh") pkgs.jq ] { };
     monitorsStubbed = stubbed "monitors" [ (stub "hyprctl") (stub "notify-send") pkgs.jq pkgs.coreutils ] { };
     audioStubbed = stubbed "audio" [ (stub "pw-dump") (stub "pw-metadata") pkgs.wireplumber pkgs.jq pkgs.coreutils ] { };
     calendarStubbed = stubbed "calendar" [ (stub "nyx-calendar-backend") (stub "evolution") (stub "gnome-calendar") ] { };
@@ -141,7 +141,12 @@
         setup = ''
           export STUB_DIR=$PWD/stub
           mkdir -p $STUB_DIR
+          cp --no-preserve=mode ${../tests/tailnet/serve.json} $STUB_DIR/serve.json
+          cp --no-preserve=mode ${../tests/tailnet/ping.txt} $STUB_DIR/ping.txt
           cp --no-preserve=mode ${../tests/tailnet/status.json} $STUB_DIR/status.json
+          printf 'root@pc-1.tail0.ts.net\n' > $STUB_DIR/allowed
+          : > $STUB_DIR/hosts
+          export HOME=$PWD/home USER=tester
           substituteInPlace cfg/config/Host.qml --replace-fail '"nyx-tailnet"' '"${lib.getExe tailnetStubbed}"'
         '';
       };
@@ -249,6 +254,7 @@
       tailnet = pkgs.runCommand "nyx-tailnet-test" {
         nativeBuildInputs = [ tailnetStubbed pkgs.jq ];
         STATUS_JSON = "${../tests/tailnet/status.json}";
+        SERVE_JSON = "${../tests/tailnet/serve.json}";
       } ''
         bash ${./_helpers/tailnet-test.sh}
         touch $out
