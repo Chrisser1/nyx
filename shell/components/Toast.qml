@@ -60,7 +60,10 @@ Item {
   implicitWidth: Style.notifications.toastWidth
   anchors.right: parent.right
   anchors.top: parent.top
-  implicitHeight: (Style.notifications.toastHeight * root.listCount) + (Style.spacing.p0 * root.listCount)
+  // Must match the ListView's spacing: shell.qml sizes the input mask from this,
+  // and a short mask lets clicks on the lower toasts' buttons fall through.
+  implicitHeight: Style.notifications.toastHeight * root.listCount
+    + Style.spacing.p2 * Math.max(0, root.listCount - 1)
   readonly property bool isPrimary: root.monitorId === Config.primaryDisplay
   visible: root.isPrimary
 

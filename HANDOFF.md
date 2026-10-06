@@ -51,14 +51,10 @@ The launcher modes are apps, power, wallpaper, theme, display, emoji and bitward
 - ScriptModel reuses delegates, so look up live values reactively. Don't store them in entries.
 - To restart nyx live, don't run `pkill -f nyx-shell-src`. Find the PID with `pgrep -x '.quickshell-wra'` and check its `/proc/<pid>/cmdline`, then run `hyprctl dispatch 'hl.dsp.exec_cmd("nyx-shell -d")'`.
 
-## Fixed, to verify live after `rebuild`
-
-- **Mirror:** Super+M opens the launcher's display mode, whose first card, Mirror displays, opens the mirror panel. Super+Shift+M is gone.
-- **Google calendars:** the calendar panel's `+` form lists every calendar the Google account can see (found through Google's CalDAV, shared ones included) with Add/Remove. Events that sit on two calendars are shown once. The family calendar is already added.
-- **Bar colours:** System is blue, Audio is green (red when muted, also for the mic), Applications is magenta; hover brightens.
-- **Tailscale:** no longer in the bar; the launcher menu has a Tailscale entry and Super+Shift+T still opens it.
-- **Notifications:** a bell with a count while anything is stored.
-
 ## Open
 
-- Nothing recorded.
+- Notifications stay too long and i cannot remove all notifications at once.
+- When booting in and starting my headset, even though noice cancelling was on and the headset microphone was selected i had to reselect it for it to apply.
+- Calender in the bar can have an improved look, see image.
+- The colors and visual for computer stats can be improved, especially colors, see second image.
+

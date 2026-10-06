@@ -127,6 +127,15 @@ Singleton {
   // whenever the chain node shows up.
   onNoiseNodeChanged: if (root.noiseNode) Quickshell.execDetached([Host.audio, "chain", "apply"])
 
+  // A headset that shows up after the chain node (boot, reconnect) has no
+  // stored target to link to yet, so apply again once the mic list settles.
+  onSourcesChanged: chainReapply.restart()
+  Timer {
+    id: chainReapply
+    interval: 1000
+    onTriggered: if (root.noiseNode) Quickshell.execDetached([Host.audio, "chain", "apply"])
+  }
+
   function deviceLabel(n) { return n?.nickname || n?.description || n?.name || "" }
   function appLabel(n) {
     return n?.properties?.["application.name"] || n?.properties?.["media.name"] || root.deviceLabel(n)

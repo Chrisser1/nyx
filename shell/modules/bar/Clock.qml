@@ -39,13 +39,14 @@ Rectangle {
   ColumnLayout {
     id: layout
     implicitHeight: Style.bar.height - Style.spacing.p1 * 2
-    spacing: -2
+    spacing: 0
     anchors.verticalCenter: parent.verticalCenter
     Text {
-      Layout.alignment: Qt.AlignRight
+      Layout.alignment: Qt.AlignHCenter
       font {
-        family: Style.font.light
-        pointSize: Style.font.small
+        family: Style.font.main
+        pointSize: Style.font.normal
+        bold: true
       }
 
       color: mouseArea.containsMouse || root.calendarShown
@@ -58,17 +59,14 @@ Rectangle {
       }
     }
     Text {
-      Layout.alignment: Qt.AlignRight
+      Layout.alignment: Qt.AlignHCenter
       font {
-        family: Style.font.light
+        family: Style.font.main
         pointSize: Style.font.tiny
       }
 
-      color: Style.colors.white
+      color: Style.colors.brightBlack
       text: Time.date
     }
   }
-
-
 }
-

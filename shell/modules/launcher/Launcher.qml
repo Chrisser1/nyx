@@ -17,6 +17,7 @@ import qs.config
 import qs.services
 import qs.utils
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell.Hyprland
 import Quickshell
@@ -246,6 +247,17 @@ Item {
     }
   }
 
+  GlobalShortcut { // qmllint disable unresolved-type
+    appid: "nyx"
+    name: "discardAllNotifications"
+    description: "Discards all notifications"
+    onPressed: {
+      if (Hyprland.focusedMonitor?.name === root.monitorId) {
+        Notifications.discardAllNotifications();
+      }
+    }
+  }
+
   BorderRect {
     id: launcher
 
@@ -266,6 +278,31 @@ Item {
         duration: Style.durations.small
         easing.type: Easing.InOutCubic
       }
+    }
+
+    Button {
+      id: clearAll
+      objectName: "clearAll"
+      z: 1
+      visible: root.owner && GlobalState.launcherMode === "notifications"
+        && Notifications.list.length > 0
+      anchors.top: parent.top
+      anchors.right: parent.right
+      anchors.margins: Style.spacing.p2
+      padding: Style.spacing.p1
+      onClicked: Notifications.discardAllNotifications()
+      background: Rectangle {
+        color: Style.colors.black
+        border.width: Style.bar.borderWidth
+        border.color: clearAll.hovered ? Style.colors.brightWhite : Style.colors.line
+      }
+      contentItem: Text {
+        text: "Clear all"
+        color: clearAll.hovered ? Style.colors.brightWhite : Style.colors.white
+        font.family: Style.font.main
+        font.pointSize: Style.font.small
+      }
+      HoverHandler { cursorShape: Qt.PointingHandCursor }
     }
 
     ColumnLayout {

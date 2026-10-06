@@ -1,4 +1,6 @@
-// CPU and RAM readout, from the ResourceUsage service.
+// CPU and RAM readout, from the ResourceUsage service. Each stat is tinted by
+// load: muted while idle, then yellow, orange and red as it climbs, with a thin
+// bar underneath showing the share.
 
 import QtQuick
 import QtQuick.Layouts
@@ -11,47 +13,71 @@ Rectangle {
   implicitHeight: parent.height
   color: "transparent"
 
-  component Stat: RowLayout {
-    id: stat
-    required property string glyph
-    required property real value      // 0.0 - 1.0, drives the tint only
-    required property string label    // what actually gets rendered
-    required property color tint
-    spacing: Style.spacing.p0
+  // Load tint, shared by the glyph, the number past 60% and the bar.
+  function loadTint(v) {
+    if (v > 0.9) return Style.colors.red;
+    if (v > 0.75) return Style.colors.orange;
+    if (v > 0.6) return Style.colors.yellow;
+    return Style.colors.green;
+  }
 
-    Text {
-      text: stat.glyph
-      color: stat.tint
-      font.family: Style.font.symbols
-      font.pointSize: Style.font.small
-      Layout.alignment: Qt.AlignVCenter
+  component Stat: ColumnLayout {
+    id: stat
+    objectName: "stat"
+    required property string glyph
+    required property real value      // 0.0 - 1.0
+    required property string label    // what actually gets rendered
+    readonly property color tint: root.loadTint(stat.value)
+    spacing: 1
+
+    RowLayout {
+      spacing: Style.spacing.p0
+      Text {
+        text: stat.glyph
+        color: stat.tint
+        font.family: Style.font.symbols
+        font.pointSize: Style.font.small
+        Layout.alignment: Qt.AlignVCenter
+        Behavior on color { ColorAnimation { duration: Style.durations.small } }
+      }
+      Text {
+        text: stat.label
+        color: stat.value > 0.6 ? stat.tint : Style.colors.white
+        font.family: Style.font.main
+        font.pointSize: Style.font.small
+        Layout.alignment: Qt.AlignVCenter
+        Behavior on color { ColorAnimation { duration: Style.durations.small } }
+      }
     }
-    Text {
-      text: stat.label
-      color: Style.colors.white
-      font.family: Style.font.main
-      font.pointSize: Style.font.small
-      Layout.alignment: Qt.AlignVCenter
+
+    Rectangle {
+      Layout.fillWidth: true
+      implicitHeight: 2 * Config.scale
+      color: Style.colors.gray3
+      Rectangle {
+        width: parent.width * Math.min(1, Math.max(0, stat.value))
+        height: parent.height
+        color: stat.tint
+        Behavior on width { NumberAnimation { duration: Style.durations.small; easing.type: Easing.OutQuad } }
+      }
     }
   }
 
   RowLayout {
     anchors.verticalCenter: parent.verticalCenter
-    spacing: Style.spacing.p2
+    spacing: Style.spacing.p3
 
     Stat {
       glyph: ""   // cpu
       value: ResourceUsage.cpuUsage
       // Fixed width so the bar doesn't reflow as the number changes width.
       label: `${Math.round(ResourceUsage.cpuUsage * 100)}%`.padStart(4, " ")
-      tint: ResourceUsage.cpuUsage > 0.8 ? Style.colors.brightRed : Style.colors.brightBlue
     }
     Stat {
       glyph: "󰍛"   // memory
       value: ResourceUsage.memoryUsedPercentage
       // Used out of total, e.g. "12.4/31.3G". Padded for the same reason.
       label: `${ResourceUsage.memoryUsedGb.padStart(4, " ")}/${ResourceUsage.memoryTotalGb}G`
-      tint: ResourceUsage.memoryUsedPercentage > 0.9 ? Style.colors.brightRed : Style.colors.brightGreen
     }
   }
 }
