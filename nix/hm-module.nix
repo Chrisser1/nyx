@@ -37,6 +37,7 @@
       inherit pkgs lib helpers;
       inherit (theming) theme;
       inherit (cfg) outputs terminal;
+      trayHidden = cfg.tray.hidden;
       iconTheme = cfg.iconTheme.name;
       hyprland = cfg.hyprlandPackage;
     };
@@ -114,6 +115,13 @@
         type = types.str;
         default = "kitty";
         description = "Terminal for run-in-terminal launcher entries.";
+      };
+
+      tray.hidden = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        example = [ "wayscriber" ];
+        description = "Ids of tray items to leave out of the bar's tray, compared without regard to case. The bar hides the tray when none are left.";
       };
 
       lockCommand = mkOption {

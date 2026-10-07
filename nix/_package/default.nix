@@ -1,5 +1,5 @@
 # shell/ with a generated Host.qml, run from the store as `nyx-shell`.
-{ pkgs, lib, helpers, theme, hyprland, outputs, terminal, iconTheme }:
+{ pkgs, lib, helpers, theme, hyprland, outputs, terminal, iconTheme, trayHidden ? [ ] }:
 let
   exe = lib.getExe;
 
@@ -13,6 +13,8 @@ let
       readonly property string right: "${outputs.right}"
 
       readonly property string terminal: "${terminal}"
+
+      readonly property var trayHidden: ${builtins.toJSON (map lib.toLower trayHidden)}
 
       readonly property string power: "${exe helpers.power}"
       readonly property string screenshot: "${exe helpers.screenshot}"

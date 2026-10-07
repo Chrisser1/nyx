@@ -18,6 +18,9 @@ Singleton {
 
   readonly property string terminal: "kitty"
 
+  // Tray items to leave out, by lowercase id.
+  readonly property var trayHidden: []
+
   // Helper binaries. Nix replaces each with an absolute store path.
   readonly property string power: "nyx-power"
   readonly property string screenshot: "nyx-screenshot"
