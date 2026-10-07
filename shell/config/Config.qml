@@ -109,7 +109,7 @@ Singleton {
       panel: "tailnet",
       genericName: "Menu",
       categories: ["Network", "Utility"],
-      iconId: "network-vpn"
+      iconId: "preferences-system-network"
     },
     {
       id: "nyx-mode-bitwarden",
@@ -118,7 +118,7 @@ Singleton {
       panel: "bitwarden",
       genericName: "Menu",
       categories: ["Security", "Utility"],
-      iconId: "dialog-password"
+      iconId: "bitwarden"
     },
     {
       id: "nyx-mode-emoji",
@@ -127,7 +127,7 @@ Singleton {
       mode: "emoji",
       genericName: "Menu",
       categories: ["Utility", "Text"],
-      iconId: "face-smile"
+      iconId: "accessories-character-map"
     },
     {
       id: "nyx-mode-power",
@@ -272,7 +272,7 @@ Singleton {
       genericName: "Display",
       categories: ["Display", "Configuration"],
       script: [Host.monitors, "save"],
-      iconId: "document-save"
+      iconId: "drive-harddisk"
     }
   ]
 

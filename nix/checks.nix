@@ -27,6 +27,7 @@
     stubbed = name: runtimeInputs: env: import ./_helpers/script.nix { inherit pkgs; } name runtimeInputs env;
     dockerStubbed = stubbed "docker" [ (stub "docker") pkgs.jq ] { };
     tailnetStubbed = stubbed "tailnet" [ (stub "tailscale") (stub "ssh") pkgs.jq ] { };
+    lyricsStubbed = stubbed "lyrics" [ (stub "curl") pkgs.jq pkgs.coreutils ] { };
     monitorsStubbed = stubbed "monitors" [ (stub "hyprctl") (stub "notify-send") pkgs.jq pkgs.coreutils ] { };
     audioStubbed = stubbed "audio" [ (stub "pw-dump") (stub "pw-metadata") pkgs.wireplumber pkgs.jq pkgs.coreutils ] { };
     calendarStubbed = stubbed "calendar" [ (stub "nyx-calendar-backend") (stub "evolution") (stub "gnome-calendar") ] { };
@@ -113,6 +114,7 @@
       notification-button = qmlTest "notifybutton" { };
       bar-colors = qmlTest "barcolors" { };
       bar-context = qmlTest "context" { };
+      lyrics-data = qmlTest "lyrics" { };
 
       mirror-panel = qmlTest "mirror" {
         setup = ''
@@ -248,6 +250,13 @@
         nativeBuildInputs = [ dockerStubbed pkgs.jq ];
       } ''
         bash ${./_helpers/docker-test.sh}
+        touch $out
+      '';
+
+      lyrics = pkgs.runCommand "nyx-lyrics-test" {
+        nativeBuildInputs = [ lyricsStubbed pkgs.jq ];
+      } ''
+        bash ${./_helpers/lyrics-test.sh}
         touch $out
       '';
 

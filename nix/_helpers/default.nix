@@ -64,6 +64,7 @@ in rec {
   };
   docker = script "docker" [ pkgs.docker-client pkgs.jq ] { };
   tailnet = script "tailnet" [ pkgs.tailscale pkgs.jq pkgs.openssh ] { };
+  lyrics = script "lyrics" [ pkgs.curl pkgs.jq pkgs.coreutils ] { };
   bitwarden = script "bitwarden" (with pkgs; [ rbw jq wl-clipboard wtype libnotify coreutils findutils gnugrep ]) {
     NYX_BITWARDEN_CLEAR = toString bitwardenClear;
     NYX_BITWARDEN_TYPE_DELAY = "0.25";
@@ -74,5 +75,5 @@ in rec {
     NYX_WALLPAPER_DEFAULT = defaultWallpaper;
   };
 
-  all = [ power screenshot colorpicker audio kbdBacklight brightness clipboard calc calendar monitors wallpaper emoji docker tailnet bitwarden ];
+  all = [ power screenshot colorpicker audio kbdBacklight brightness clipboard calc calendar monitors wallpaper emoji docker tailnet lyrics bitwarden ];
 }

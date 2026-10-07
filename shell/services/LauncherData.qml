@@ -384,7 +384,7 @@ Singleton {
       name: valid ? `Log in as ${q}` : "Type your email above",
       genericName: region,
       comment: valid ? "Asks for your password in a dialog" : "Then press Enter here",
-      iconId: "dialog-password",
+      iconId: "bitwarden",
       loginEmail: valid ? q : ""
     }];
     for (const r of root.vaultRegions) {

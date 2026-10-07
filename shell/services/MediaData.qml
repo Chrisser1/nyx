@@ -59,7 +59,7 @@ Singleton {
   // `position` is not reactive -- MPRIS only signals jumps, not linear
   // progress -- so poke it while someone is looking at it.
   Timer {
-    interval: 1000
+    interval: 500
     repeat: true
     running: GlobalState.mediaOpen && (root.player?.isPlaying ?? false)
     onTriggered: root.player?.positionChanged()

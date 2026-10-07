@@ -320,6 +320,64 @@ Item {
           }
         }
       }
+
+      // ── Lyrics ───────────────────────────────────────────────────────
+      // The playing line sits in the middle of a fixed window; unsynced lyrics
+      // just scroll.
+      Item {
+        id: lyrics
+        objectName: "lyrics"
+        Layout.fillWidth: true
+        implicitHeight: Style.media.lyricsRowHeight * Style.media.lyricsRows
+        readonly property bool synced: LyricsData.state === "synced"
+
+        Text {
+          anchors.centerIn: parent
+          visible: LyricsData.state === "loading" || LyricsData.state === "none"
+          text: LyricsData.state === "loading" ? "Loading lyrics…" : "No lyrics"
+          color: Style.colors.brightBlack
+          font.family: Style.font.main
+          font.pointSize: Style.font.small
+        }
+
+        ListView {
+          id: lyricsList
+          anchors.fill: parent
+          clip: true
+          interactive: !lyrics.synced
+          model: LyricsData.lines
+          currentIndex: Math.max(0, LyricsData.currentIndex)
+          highlightRangeMode: lyrics.synced ? ListView.StrictlyEnforceRange : ListView.NoHighlightRange
+          preferredHighlightBegin: (height - Style.media.lyricsRowHeight) / 2
+          preferredHighlightEnd: (height + Style.media.lyricsRowHeight) / 2
+          highlightMoveDuration: Style.durations.normal
+
+          delegate: Text {
+            id: line
+            required property int index
+            required property var modelData
+            readonly property bool current: lyrics.synced && index === LyricsData.currentIndex
+            width: lyricsList.width
+            height: Style.media.lyricsRowHeight
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+            text: modelData.text || "♪"
+            font.family: Style.font.main
+            font.pointSize: Style.font.small
+            font.bold: current
+            color: current ? Style.colors.brightWhite : Style.colors.brightBlack
+            Behavior on color { ColorAnimation { duration: Style.durations.small } }
+
+            MouseArea {
+              anchors.fill: parent
+              enabled: lyrics.synced && root.seekable
+              cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+              onClicked: root.player.position = line.modelData.time
+            }
+          }
+        }
+      }
     }
   }
 }

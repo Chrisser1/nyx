@@ -75,7 +75,7 @@ Rectangle {
       text: root.player?.isPlaying ? "" : ""
       font.family: Style.font.symbols
       font.pointSize: Style.font.small
-      color: Style.colors.brightGreen
+      color: Style.colors.brightBlack
       Layout.alignment: Qt.AlignVCenter
 
       MouseArea {
@@ -89,7 +89,7 @@ Rectangle {
     Item {
       Layout.alignment: Qt.AlignVCenter
       implicitHeight: root.height * 0.8
-      implicitWidth: Math.min(title.implicitWidth, 220)
+      implicitWidth: 220
       clip: true
 
       // The levels, behind the title.

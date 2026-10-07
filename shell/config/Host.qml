@@ -35,6 +35,7 @@ Singleton {
   readonly property string emoji: "nyx-emoji"
   readonly property string docker: "nyx-docker"
   readonly property string tailnet: "nyx-tailnet"
+  readonly property string lyrics: "nyx-lyrics"
   readonly property string bitwarden: "nyx-bitwarden"
   readonly property string brightnessctl: "brightnessctl"
   readonly property string kbdBacklight: "nyx-kbd-backlight"

@@ -34,13 +34,13 @@ ShellRoot {
     { what: "measured", settle: 3, ready: () => context.width > 0,
       act: () => {
         root.shortWidth = context.width;
-        if (next.x > context.x + context.width + 20) root.fail(`gap after a short name: ${next.x - context.width}`);
         root.shot("context-short");
         root.show("Firefox", "A very long page title that goes on and on and on, far past anything sensible for a bar");
       } },
-    { what: "long name", settle: 3, ready: () => context.width > root.shortWidth,
+    { what: "long name", settle: 3, settle: 3, ready: () => true,
       act: () => {
-        if (context.width > Style.bar.contextMaxWidth) root.fail(`label wider than its cap: ${context.width}`);
+        if (context.width !== root.shortWidth) root.fail(`width changed with the title: ${root.shortWidth} -> ${context.width}`);
+        if (context.width !== Style.bar.contextMaxWidth) root.fail(`not the fixed width: ${context.width}`);
         if (next.x < context.width) root.fail("the next widget overlaps the label");
         root.shot("context-long");
         console.log("PASS");
@@ -61,7 +61,7 @@ ShellRoot {
       Loader {
         id: context
         Layout.fillHeight: true
-        Layout.maximumWidth: Style.bar.contextMaxWidth
+        Layout.preferredWidth: Style.bar.contextMaxWidth
         sourceComponent: Context { }
       }
       Rectangle { id: next; implicitWidth: 40; Layout.fillHeight: true; color: "red" }

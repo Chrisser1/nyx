@@ -1,4 +1,4 @@
-// Bar notification button: a bell, with no count while nothing is stored.
+// Bar notification button: the triangle icon, idle with no count while nothing is stored.
 // Saves a screenshot to $OUT when set.
 import QtQuick
 import Quickshell
@@ -37,7 +37,7 @@ ShellRoot {
     running: true
     onTriggered: {
       const bell = root.find(button, "bell");
-      if (!bell || bell.text !== "\u{F009C}") root.fail(`bell glyph: ${bell?.text}`);
+      if (!bell || bell.lit) root.fail("bell should be idle with nothing stored");
       if (root.find(button, "badge").visible) root.fail("count shown with no notifications");
       if (Quickshell.env("OUT")) button.grabToImage(r => r.saveToFile(`${Quickshell.env("OUT")}/notify.png`));
       console.log("PASS");

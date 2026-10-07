@@ -36,7 +36,7 @@ Singleton {
     readonly property real borderWidth: 1 * Config.scale
     readonly property int sliderWidth: 120 * Config.scale
     // The widest the open-window label grows before its text is elided.
-    readonly property int contextMaxWidth: 360 * Config.scale
+    readonly property int contextMaxWidth: 300 * Config.scale
   }
   readonly property Bar bar: Bar {}
 
@@ -77,6 +77,9 @@ Singleton {
     readonly property int progressHeight: 4 * Config.scale
     // The progress bar's columns grow up to this with the music.
     readonly property int visualizerHeight: 28 * Config.scale
+    // The lyrics block under the transport row: a few lines at a fixed pitch.
+    readonly property int lyricsRowHeight: 24 * Config.scale
+    readonly property int lyricsRows: 5
   }
   readonly property Media media: Media { }
 

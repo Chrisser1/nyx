@@ -8,7 +8,7 @@
 // ││ Site    : https://www.roosta.sh              ││
 // ├┤ License : GNU General Public License v3      ├┤
 // ┆└──────────────────────────────────────────────┘┆
-// Opens the notification list. A bell, lit while anything is stored, with the
+// Opens the notification list. A triangle, flipped while anything is stored, with the
 // count beside it and one short pulse per new arrival.
 
 import qs.components
@@ -66,23 +66,52 @@ Button {
     id: row
     spacing: Style.spacing.p1
 
-    Text {
+    // The triangle flips and its dot rises while anything is stored.
+    Item {
       id: bell
       objectName: "bell"
       anchors.verticalCenter: parent.verticalCenter
-      text: root.active ? "\u{F009A}" : "\u{F009C}"
-      font.family: Style.font.symbols
-      font.pixelSize: Style.font.size3
-      color: root.active ? Style.colors.yellow : Style.colors.brightBlack
+      implicitWidth: quad.width
+      implicitHeight: quad.height
+      readonly property bool lit: root.active
 
-      Behavior on color { ColorAnimation { duration: Style.durations.small; easing.type: Easing.OutQuad } }
+      Quad {
+        id: quad
+        width: 20
+        height: 18
+        gradientEnabled: true
+        strokeColor: Style.colors.brightBlack
+        gradientStart: Style.colors.yellow
+        gradientEnd: Style.colors.cyan
+        gradientRotation: 90
+        topLeft:     bell.lit ? Qt.point(0, 0) : Qt.point(0.5, 0)
+        topRight:    bell.lit ? Qt.point(1, 0) : Qt.point(0.5, 0)
+        bottomLeft:  bell.lit ? Qt.point(0.5, 1) : Qt.point(0, 1)
+        bottomRight: bell.lit ? Qt.point(0.5, 1) : Qt.point(1, 1)
+        Behavior on topLeft     { PropertyAnimation { duration: Style.durations.small; easing.type: Easing.InOutQuad } }
+        Behavior on topRight    { PropertyAnimation { duration: Style.durations.small; easing.type: Easing.InOutQuad } }
+        Behavior on bottomLeft  { PropertyAnimation { duration: Style.durations.small; easing.type: Easing.InOutQuad } }
+        Behavior on bottomRight { PropertyAnimation { duration: Style.durations.small; easing.type: Easing.InOutQuad } }
+
+        Rectangle {
+          id: dot
+          width: 4
+          height: 4
+          radius: 4
+          anchors.horizontalCenter: parent.horizontalCenter
+          y: bell.lit ? 5 : 10
+          color: bell.lit ? Style.colors.brightWhite : Style.colors.brightBlack
+          Behavior on y { NumberAnimation { duration: Style.durations.normal; easing.type: Easing.OutCubic } }
+          Behavior on color { ColorAnimation { duration: Style.durations.small; easing.type: Easing.OutQuad } }
+        }
+      }
 
       // One pulse per arrival, not a loop: stored notifications survive
       // restarts, and a loop would repaint every bar window forever.
       SequentialAnimation {
         id: pulse
-        NumberAnimation { target: bell; property: "scale"; to: 1.3; duration: Style.durations.small; easing.type: Easing.OutCubic }
-        NumberAnimation { target: bell; property: "scale"; to: 1; duration: Style.durations.medium; easing.type: Easing.InOutCubic }
+        NumberAnimation { target: dot; property: "scale"; to: 1.75; duration: Style.durations.small; easing.type: Easing.OutCubic }
+        NumberAnimation { target: dot; property: "scale"; to: 1; duration: Style.durations.medium; easing.type: Easing.InOutCubic }
       }
 
       property int lastCount: 0

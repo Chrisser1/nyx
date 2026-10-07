@@ -67,8 +67,9 @@ Rectangle {
     anchors.verticalCenter: parent.verticalCenter
     spacing: Style.spacing.p3
 
+    Separator {}
     Stat {
-      glyph: ""   // cpu
+      glyph: "󰻠"   // cpu
       value: ResourceUsage.cpuUsage
       // Fixed width so the bar doesn't reflow as the number changes width.
       label: `${Math.round(ResourceUsage.cpuUsage * 100)}%`.padStart(4, " ")

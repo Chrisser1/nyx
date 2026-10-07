@@ -66,6 +66,7 @@ Item {
           anchors.left: parent.left
           anchors.fill: parent
           LauncherButton {
+            id: launcher
             monitorId: root.monitorId
             onDecrementCurrentIndex: root.decrementCurrentIndex()
             onIncrementCurrentIndex: root.incrementCurrentIndex()
@@ -77,13 +78,22 @@ Item {
             onAccepted: root.accepted()
           }
           Separator {}
-          Loader {
+          // The launcher grows into this slot when it opens, so everything after it
+          // stays put; the window label just fades out of the way.
+          Item {
             Layout.fillHeight: true
-            Layout.maximumWidth: Style.bar.contextMaxWidth
-            active: LauncherData.appsData.length > 0
-            sourceComponent: Context { }
+            Layout.preferredWidth: Math.max(0, Style.bar.contextMaxWidth - (launcher.implicitWidth - launcher.implicitHeight))
+            clip: true
+            Loader {
+              width: Style.bar.contextMaxWidth
+              height: parent.height
+              active: LauncherData.appsData.length > 0
+              opacity: GlobalState.launcherOpen ? 0 : 1
+              Behavior on opacity { NumberAnimation { duration: Style.durations.small } }
+              sourceComponent: Context { }
+            }
           }
-
+          Item { implicitWidth: Style.spacing.p2 }
           MediaWidget { monitorId: root.monitorId }
           SoundVisual { Layout.fillHeight: true }
           Item { Layout.fillWidth: true }
@@ -111,6 +121,7 @@ Item {
           spacing: Style.spacing.p1
           anchors.right: parent.right
           SysmonWidget { }
+          Separator {}
           NetworkWidget { monitorId: root.monitorId }
           BluetoothWidget { }
           DockerWidget { monitorId: root.monitorId }
