@@ -18,6 +18,10 @@ Singleton {
   property string state: ""
   // [{ id, name, user, folder, type, uri }]
   property list<var> entries: []
+  // What rbw is configured with; the login form offers them again.
+  property string email: ""
+  // com | eu | a server URL
+  property string region: "com"
   readonly property bool needsSetup: root.state === "unconfigured" || root.state === "login"
 
   // The focused window's title and class when the panel opened; entries that
@@ -80,6 +84,8 @@ Singleton {
         }
         root.state = data.state;
         root.entries = data.entries;
+        root.email = data.email ?? "";
+        root.region = data.region ?? "com";
       }
     }
   }

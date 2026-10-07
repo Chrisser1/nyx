@@ -20,7 +20,7 @@ if nyx-bitwarden bogus 2>/dev/null; then fail "bogus accepted"; fi
 if nyx-bitwarden copy u1 2>/dev/null; then fail "copy without field accepted"; fi
 if nyx-bitwarden copy u1 secret 2>/dev/null; then fail "unknown field accepted"; fi
 
-[ "$(nyx-bitwarden list)" = '{"state":"unconfigured","entries":[]}' ] || fail "unconfigured"
+[ "$(nyx-bitwarden list)" = '{"state":"unconfigured","entries":[],"email":"","region":"com"}' ] || fail "unconfigured"
 if nyx-bitwarden setup me@example.com mars 2>/dev/null; then fail "unknown region accepted"; fi
 if nyx-bitwarden setup me@example.com 2>/dev/null; then fail "setup without region accepted"; fi
 
@@ -28,7 +28,7 @@ if nyx-bitwarden setup me@example.com 2>/dev/null; then fail "setup without regi
 touch "$STUB_DIR/login-fails"
 if nyx-bitwarden setup me@example.com eu; then fail "failed login succeeded"; fi
 grep -q "Login failed: Username or password is incorrect" "$STUB_DIR/notifications" || fail "login failure notified"
-[ "$(nyx-bitwarden list)" = '{"state":"login","entries":[]}' ] || fail "login after failed setup"
+[ "$(nyx-bitwarden list)" = '{"state":"login","entries":[],"email":"me@example.com","region":"eu"}' ] || fail "login after failed setup keeps email and region"
 rm "$STUB_DIR/login-fails"
 rbw login
 
@@ -60,7 +60,7 @@ rm "$STUB_DIR/login-fails"
 rbw login
 
 nyx-bitwarden lock
-[ "$(nyx-bitwarden list)" = '{"state":"locked","entries":[]}' ] || fail "locked"
+[ "$(nyx-bitwarden list)" = '{"state":"locked","entries":[],"email":"me@example.com","region":"eu"}' ] || fail "locked"
 nyx-bitwarden unlock
 l=$(nyx-bitwarden list)
 [ "$(jq -r '.state' <<< "$l")" = unlocked ] || fail "unlocked: $l"

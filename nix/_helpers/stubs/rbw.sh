@@ -6,8 +6,8 @@ case "$1" in
   config)
     mkdir -p "$STUB_DIR/cfg"
     case "$2" in
-      show) jq -n --arg e "$(cfg email)" --arg b "$(cfg base_url)" --arg p "$(cfg pinentry)" \
-              'def v: if . == "" then null else . end; {email: ($e | v), base_url: ($b | v), pinentry: $p}' ;;
+      show) jq -n --arg e "$(cfg email)" --arg b "$(cfg base_url)" --arg i "$(cfg identity_url)" --arg p "$(cfg pinentry)" \
+              'def v: if . == "" then null else . end; {email: ($e | v), base_url: ($b | v), identity_url: ($i | v), pinentry: $p}' ;;
       set) printf '%s' "$4" > "$STUB_DIR/cfg/$3" ;;
       unset) rm -f "$STUB_DIR/cfg/$3" ;;
     esac ;;

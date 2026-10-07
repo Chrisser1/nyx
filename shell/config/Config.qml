@@ -268,7 +268,7 @@ Singleton {
     {
       id: "nyx-display-save",
       name: "Save monitor layout",
-      comment: "Write the current arrangement to ~/.config/hypr/monitors.lua",
+      comment: "Remember this arrangement for this set of monitors (changes already save themselves)",
       genericName: "Display",
       categories: ["Display", "Configuration"],
       script: [Host.monitors, "save"],

@@ -32,6 +32,9 @@ ShellRoot {
         const hdmi = LauncherData.monitorEntries[0];
         if (hdmi.actions.some(a => a.name.startsWith("Stop mirroring"))) root.fail("stop action without a mirror");
         if (!hdmi.actions.some(a => a.command.slice(-3).join() === "mirror,DP-1,HDMI-A-1")) root.fail("show-here action");
+        if (!hdmi.actions.some(a => a.command.slice(-3).join() === "scale,HDMI-A-1,1.5")) root.fail("scale action");
+        if (hdmi.actions.some(a => a.command.slice(-3).join() === "scale,HDMI-A-1,1")) root.fail("scale action for the current scale");
+        if (!hdmi.comment.includes(", 1x")) root.fail(`scale shown: ${hdmi.comment}`);
         Quickshell.execDetached(["cp", "-f", `${Quickshell.env("STUB_DIR")}/mirrored.json`, `${Quickshell.env("STUB_DIR")}/monitors.json`]);
       } },
     { what: "mirror applied", settle: 3, ready: () => true,

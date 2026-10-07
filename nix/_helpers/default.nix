@@ -57,7 +57,7 @@ in rec {
   };
   calc = script "calc" (with pkgs; [ libqalculate wl-clipboard ]) { NYX_QALC_CONFIG = "${qalcConfig}"; };
   calendar = script "calendar" (with pkgs; [ calendarBackend evolution gnome-calendar ]) { };
-  monitors = script "monitors" (with pkgs; [ jq libnotify wdisplays hyprland ]) { };
+  monitors = script "monitors" (with pkgs; [ jq libnotify wdisplays hyprland socat ]) { };
   emoji = script "emoji" (with pkgs; [ jq gnugrep gawk coreutils wl-clipboard wtype ]) {
     NYX_EMOJI_DATA = "${emojiData}";
     NYX_EMOJI_TYPE = if emojiType then "1" else "0";

@@ -80,6 +80,20 @@ Singleton {
         });
       }
 
+      // Each preset but the current one; Hyprland rounds to what the panel allows.
+      if (m.enabled && m.mirrorOf === "none") {
+        for (const s of ["1", "1.25", "1.5", "1.6", "2"]) {
+          if (Number(s) === Number(m.scale)) continue;
+          actions.push({
+            id: `mon-scale-${m.name}-${s}`,
+            name: `Scale ${s}x`,
+            icon: "",
+            execString: `${Host.monitors} scale ${m.name} ${s}`,
+            command: [Host.monitors, "scale", m.name, s]
+          });
+        }
+      }
+
       const state = [];
       if (!m.enabled) state.push("disabled");
       if (m.mirrorOf !== "none") state.push(`mirroring ${m.mirrorOf}`);
@@ -88,7 +102,7 @@ Singleton {
       out.push({
         id: `nyx-monitor-${m.name}`,
         name: m.name,
-        comment: `${m.desc} — ${m.mode} at ${m.pos}${state.length ? " (" + state.join(", ") + ")" : ""}`,
+        comment: `${m.desc} — ${m.mode} at ${m.pos}, ${m.scale}x${state.length ? " (" + state.join(", ") + ")" : ""}`,
         genericName: "Monitor",
         categories: ["Display", m.enabled ? "Enabled" : "Disabled"],
         iconId: m.enabled ? "video-display" : "preferences-desktop-display",
@@ -353,14 +367,15 @@ Singleton {
   // (or paste a server URL and press Enter on its card), then Enter on the
   // login card. The password and 2FA code are asked for in pinentry.
   readonly property bool vaultNeedsSetup: VaultData.needsSetup
-  property string vaultRegion: "com"
+  // Follows what rbw is configured with until a card is picked.
+  property string vaultRegion: VaultData.region
   readonly property var vaultRegions: [
     { id: "com", name: "Bitwarden.com", comment: "United States" },
     { id: "eu", name: "Bitwarden.eu", comment: "European Union" }
   ]
 
   function setupEntries(query) {
-    const q = query.trim();
+    const q = query.trim() || VaultData.email;
     const isUrl = /^https?:\/\//.test(q);
     const valid = !isUrl && /^[^@\s]+@[^@\s]+$/.test(q);
     const region = root.vaultRegions.find(r => r.id === root.vaultRegion)?.name ?? root.vaultRegion;

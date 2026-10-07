@@ -53,8 +53,4 @@ The launcher modes are apps, power, wallpaper, theme, display, emoji and bitward
 
 ## Open
 
-- Notifications stay too long and i cannot remove all notifications at once.
-- When booting in and starting my headset, even though noice cancelling was on and the headset microphone was selected i had to reselect it for it to apply.
-- Calender in the bar can have an improved look, see image.
-- The colors and visual for computer stats can be improved, especially colors, see second image.
-
+- TODO!

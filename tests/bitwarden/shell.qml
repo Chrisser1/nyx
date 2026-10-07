@@ -73,6 +73,8 @@ ShellRoot {
     { what: "locked", settle: 3, ready: () => VaultData.state === "locked",
       act: () => {
         if (panel.entries.length !== 0 || !panel.emptyText.includes("unlock")) root.fail(`locked panel: ${panel.emptyText}`);
+        if (VaultData.email !== "me@example.com") root.fail(`email read back: ${VaultData.email}`);
+        if (LauncherData.setupEntries("")[0].loginEmail !== VaultData.email) root.fail("login card offers the stored email");
         panel.setup();
       } },
     { what: "unlocked again", settle: 3, ready: () => VaultData.state === "unlocked",

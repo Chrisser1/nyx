@@ -27,9 +27,16 @@ case "${1:-}" in
     # The state decides what the launcher offers; listing never prompts.
     # rbw has no logged-in check, but an unlocked agent or a vault file named
     # after the email means login happened.
-    email=$(rbw config show 2>/dev/null | jq -r '.email // empty') || email=
+    # The email and region ride along, so the login form can offer them again.
+    cfg=$(rbw config show 2>/dev/null) || cfg='{}'
+    email=$(jq -r '.email // empty' <<< "$cfg")
+    region=$(jq -r '(.base_url // "") as $b
+      | if ($b + (.identity_url // "")) | test("bitwarden\\.eu") then "eu"
+        elif $b == "" or ($b | test("bitwarden\\.com")) then "com"
+        else $b end' <<< "$cfg")
+    emit() { jq -c --arg e "$email" --arg r "$region" '. + {email: $e, region: $r}'; }
     if [ -z "$email" ]; then
-      echo '{"state":"unconfigured","entries":[]}'
+      echo '{"state":"unconfigured","entries":[]}' | emit
     elif rbw unlocked > /dev/null 2>&1; then
       rbw list --raw | jq -c '{state: "unlocked", entries: map({
         id,
@@ -38,11 +45,11 @@ case "${1:-}" in
         folder: (.folder // ""),
         type: (.type // ""),
         uri: ((.uris // [])[0] // "")
-      })}'
+      })}' | emit
     elif find "${XDG_DATA_HOME:-$HOME/.local/share}/rbw" -maxdepth 1 -name "*$email*" 2>/dev/null | grep -q .; then
-      echo '{"state":"locked","entries":[]}'
+      echo '{"state":"locked","entries":[]}' | emit
     else
-      echo '{"state":"login","entries":[]}'
+      echo '{"state":"login","entries":[]}' | emit
     fi ;;
   setup)
     # Configures rbw and logs in. Passwords and 2FA codes come from pinentry,
