@@ -65,9 +65,11 @@ Singleton {
     lockProc.running = true;
   }
 
-  // Unlocking prompts through pinentry.
+  // Unlocking prompts through pinentry; the overlay would cover it.
   function unlock() {
-    if (!unlockProc.running) unlockProc.running = true;
+    if (unlockProc.running) return;
+    GlobalState.closeAll();
+    unlockProc.running = true;
   }
 
   Process {

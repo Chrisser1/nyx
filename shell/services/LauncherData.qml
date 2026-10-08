@@ -411,6 +411,7 @@ Singleton {
   }
 
   function loginVault(monitorId, email) {
+    GlobalState.closeAll();
     loginProc.monitorId = monitorId;
     loginProc.command = [Host.bitwarden, "setup", email, root.vaultRegion];
     loginProc.running = true;

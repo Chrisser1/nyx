@@ -53,4 +53,4 @@ The launcher modes are apps, power, wallpaper, theme, display, emoji and bitward
 
 ## Open
 
-- TODO!
+- When you login with tailscale using mod b the box for the login opens behind the bitwarden box, this should not be the case as we need to input the login, so it should be in front.
