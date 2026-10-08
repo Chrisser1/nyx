@@ -1,6 +1,7 @@
 // CPU and RAM readout, from the ResourceUsage service. Each stat is tinted by
 // load: muted while idle, then yellow, orange and red as it climbs, with a thin
-// bar underneath showing the share.
+// bar underneath showing the share. It has no Behaviors on purpose: any of
+// them kept the bar redrawing at ~120 fps while idle.
 
 import QtQuick
 import QtQuick.Layouts
@@ -38,7 +39,6 @@ Rectangle {
         font.family: Style.font.symbols
         font.pointSize: Style.font.small
         Layout.alignment: Qt.AlignVCenter
-        Behavior on color { ColorAnimation { duration: Style.durations.small } }
       }
       Text {
         text: stat.label
@@ -46,7 +46,6 @@ Rectangle {
         font.family: Style.font.main
         font.pointSize: Style.font.small
         Layout.alignment: Qt.AlignVCenter
-        Behavior on color { ColorAnimation { duration: Style.durations.small } }
       }
     }
 
@@ -58,7 +57,6 @@ Rectangle {
         width: parent.width * Math.min(1, Math.max(0, stat.value))
         height: parent.height
         color: stat.tint
-        Behavior on width { NumberAnimation { duration: Style.durations.small; easing.type: Easing.OutQuad } }
       }
     }
   }

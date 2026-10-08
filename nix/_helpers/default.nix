@@ -64,16 +64,17 @@ in rec {
   };
   docker = script "docker" [ pkgs.docker-client pkgs.jq ] { };
   tailnet = script "tailnet" [ pkgs.tailscale pkgs.jq pkgs.openssh ] { };
+  bench = script "bench" (with pkgs; [ coreutils gawk procps gnugrep jq util-linux strace hyprland ]) { };
   lyrics = script "lyrics" [ pkgs.curl pkgs.jq pkgs.coreutils ] { };
   bitwarden = script "bitwarden" (with pkgs; [ rbw jq wl-clipboard wtype libnotify coreutils findutils gnugrep ]) {
     NYX_BITWARDEN_CLEAR = toString bitwardenClear;
     NYX_BITWARDEN_TYPE_DELAY = "0.25";
     NYX_BITWARDEN_PINENTRY = "${pinentry}/bin/pinentry";
   };
-  wallpaper = script "wallpaper" (with pkgs; [ jq procps findutils coreutils ffmpeg-headless gslapper hyprland theme ]) {
+  wallpaper = script "wallpaper" (with pkgs; [ jq socat procps findutils coreutils ffmpeg-headless gslapper hyprland theme ]) {
     NYX_WALLPAPER_DIR = wallpaperDir;
     NYX_WALLPAPER_DEFAULT = defaultWallpaper;
   };
 
-  all = [ power screenshot colorpicker audio kbdBacklight brightness clipboard calc calendar monitors wallpaper emoji docker tailnet lyrics bitwarden ];
+  all = [ power screenshot colorpicker audio kbdBacklight brightness clipboard calc calendar monitors wallpaper emoji docker tailnet lyrics bitwarden bench ];
 }

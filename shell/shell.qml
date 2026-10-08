@@ -38,6 +38,8 @@ import qs.services
 import qs
 
 ShellRoot {
+  Component.onCompleted: WallpaperPause.init()
+
   // Registered here, outside the Variants, so it exists once rather than once
   // per monitor. The panel itself is per-monitor; the shortcut only has to pick
   // which one, which is what GlobalState.toggleWifi takes.

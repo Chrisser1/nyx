@@ -65,6 +65,8 @@ Item {
     id: buttonComponent
     Button {
       property bool visualActive: false
+      // Button.hovered is read-only and ignores the MouseArea on top.
+      readonly property bool pointerOver: mouseArea.containsMouse
       opacity: visualActive ? 1 : 0
       id: button
       Component.onCompleted: visualActive = true
@@ -451,6 +453,6 @@ Item {
 
   Tip {
     text: "Launcher\nRight click: menu"
-    hovered: mouseArea.containsMouse
+    hovered: buttonLoader.item?.pointerOver ?? false
   }
 }

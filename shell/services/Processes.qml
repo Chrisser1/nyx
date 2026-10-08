@@ -19,7 +19,9 @@ Singleton {
   property string sortKey: "%cpu"
   readonly property int rows: 15
 
-  // [{ pid, name, cpu, mem, rss }], already truncated to `rows`.
+  // [{ pid, name, cpu, mem, rss }], already truncated to `rows`. `cpu` is the
+  // share of the whole machine, like the CPU readout; ps itself reports a share
+  // of one core, which passes 100 for a multithreaded process.
   property var list: []
 
   function setSort(key: string): void {
@@ -59,7 +61,7 @@ Singleton {
           parsed.push({
             pid: Number(m[1]),
             name: m[2],
-            cpu: Number(m[3]),
+            cpu: Number(m[3]) / ResourceUsage.cpuCores,
             mem: Number(m[4]),
             rss: Number(m[5])
           })

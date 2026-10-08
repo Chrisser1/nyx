@@ -115,6 +115,7 @@
       bar-colors = qmlTest "barcolors" { };
       bar-context = qmlTest "context" { };
       lyrics-data = qmlTest "lyrics" { };
+      wallpaper-pause = qmlTest "wallpaperpause" { };
 
       mirror-panel = qmlTest "mirror" {
         setup = ''

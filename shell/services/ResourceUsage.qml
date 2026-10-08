@@ -32,6 +32,8 @@ Singleton {
   property real swapUsed: swapTotal - swapFree
   property real swapUsedPercentage: swapTotal > 0 ? (swapUsed / swapTotal) : 0
   property real cpuUsage: 0
+  // Logical cores, from the per-core lines of /proc/stat.
+  property int cpuCores: 1
   property var previousCpuStats
   property string cpuTooltip
 
@@ -114,6 +116,7 @@ Singleton {
 
       // Parse CPU usage
       const textStat = fileStat.text()
+      root.cpuCores = (textStat.match(/^cpu\d+/gm) ?? []).length || 1
       const cpuLine = textStat.match(/^cpu\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/)
       if (cpuLine) {
         const stats = cpuLine.slice(1).map(Number)

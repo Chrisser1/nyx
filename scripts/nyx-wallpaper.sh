@@ -35,6 +35,9 @@ thumb() {
 
 outputs() { hyprctl -j monitors | jq -r '.[].name'; }
 
+# A missing socket (still wallpaper, or none) is not an error.
+ipc() { printf '%s\n' "$2" | socat -t 0.2 - "UNIX-CONNECT:$SOCKDIR/$1.sock" > /dev/null 2>&1 || true; }
+
 owns_socket() { [[ "$(tr '\0' ' ' < "/proc/$1/cmdline" 2>/dev/null)" == *"nyx-gslapper/$2.sock"* ]]; }
 
 apply() {
@@ -52,11 +55,16 @@ apply() {
   fi
   if is_video "$rel"; then opts="fill no-audio loop"; else opts="fill"; fi
   gslapper --fork --no-save-state --ipc-socket "$SOCKDIR/$out.sock" \
-    --gst-options "$opts" --fps-cap 60 "$out" "$ROOT/$rel" >/dev/null 2>&1 || true
+    --gst-options "$opts" --fps-cap 30 "$out" "$ROOT/$rel" >/dev/null 2>&1 || true
   # --fork detaches; find the child by its socket path.
   for cand in $(pgrep -f gslapper || true); do
     if owns_socket "$cand" "$out"; then echo "$cand" > "$pidfile"; fi
   done
+  # The shell hid this output before the new player existed; keep it paused.
+  if [ -e "$SOCKDIR/$out.paused" ]; then
+    for _ in $(seq 20); do [ -S "$SOCKDIR/$out.sock" ] && break; sleep 0.1; done
+    ipc "$out" pause
+  fi
 }
 
 save() {
@@ -90,6 +98,13 @@ case "${1:-}" in
     [ $# -ge 2 ] || { echo "usage: nyx-wallpaper set-all <relative-path>" >&2; exit 2; }
     for o in $(outputs); do apply "$o" "$2" && save "$o" "$2"; done
     nyx-theme sync "$ROOT/$2" ;;
+  pause|resume)
+    [ $# -eq 2 ] || { echo "usage: nyx-wallpaper $1 <output|all>" >&2; exit 2; }
+    if [ "$2" = all ]; then targets=$(outputs); else targets=$2; fi
+    for o in $targets; do
+      if [ "$1" = pause ]; then touch "$SOCKDIR/$o.paused"; else rm -f "$SOCKDIR/$o.paused"; fi
+      ipc "$o" "$1"
+    done ;;
   restore)
     for o in $(outputs); do
       rel=$(jq -r --arg o "$o" '.[$o] // ""' "$FILE")
@@ -98,6 +113,6 @@ case "${1:-}" in
       { apply "$o" "$rel" && save "$o" "$rel"; } || true
     done ;;
   *)
-    echo "usage: nyx-wallpaper {list|thumbs|outputs|current <out>|state|set <out> <rel>|set-all <rel>|restore|theme|root}" >&2
+    echo "usage: nyx-wallpaper {list|thumbs|outputs|current <out>|state|set <out> <rel>|set-all <rel>|pause <out|all>|resume <out|all>|restore|theme|root}" >&2
     exit 2 ;;
 esac

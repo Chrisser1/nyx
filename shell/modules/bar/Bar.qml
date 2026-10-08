@@ -15,6 +15,7 @@ import qs.services
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
+import qs
 pragma ComponentBehavior: Bound
 
 Item {

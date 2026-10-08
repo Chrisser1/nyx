@@ -20,6 +20,13 @@ expect_usage nyx-screenshot bogus
 [ "$(nyx-wallpaper state)" = "{}" ] || fail "wallpaper state"
 [ -z "$(nyx-wallpaper current DP-1)" ] || fail "wallpaper current"
 
+# Pause state is remembered so a replacement player can start paused.
+nyx-wallpaper pause DP-1
+[ -e "$XDG_RUNTIME_DIR/nyx-gslapper/DP-1.paused" ] || fail "pause marker"
+nyx-wallpaper resume DP-1
+[ ! -e "$XDG_RUNTIME_DIR/nyx-gslapper/DP-1.paused" ] || fail "resume clears marker"
+expect_usage nyx-wallpaper pause
+
 nyx-kbd-backlight up || fail "kbd-backlight must no-op without an LED"
 
 # Thumbnails: one per wallpaper, JPEGs, cached between runs.
