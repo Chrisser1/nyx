@@ -106,6 +106,13 @@ Item {
 
     Component.onCompleted: if (root.isPrimary) list.syncModel(Notifications.popupList)
 
+    Connections {
+      target: root
+      function onIsPrimaryChanged() {
+        list.syncModel(root.isPrimary ? Notifications.popupList : [])
+      }
+    }
+
     delegate: Rectangle {
       implicitHeight: Style.notifications.toastHeight
       id: popup
